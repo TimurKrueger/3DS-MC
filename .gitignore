@@ -1,0 +1,58 @@
+# ------------------------------------------------------
+# User-defined !!!
+# ------------------------------------------------------
+
+# User-defined ignores are placed at the bottom to make sure they override all
+
+# ------------------------------------------------------
+# macOS
+# ------------------------------------------------------
+
+.DS_Store
+
+# ------------------------------------------------------
+# CMake
+# ------------------------------------------------------
+
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+# ------------------------------------------------------
+# Visual Studio Code
+# ------------------------------------------------------
+
+**/.vscode/
+
+# Local History
+.history/
+
+# ------------------------------------------------------
+# JetBrains IDEs
+# ------------------------------------------------------
+
+# User-specific stuff
+**/.idea/
+
+# ------------------------------------------------------
+# User-defined
+# ------------------------------------------------------
+
+# Library folder
+libs/
+
+# Build folders
+**Build*/
+
+# Never ignore data and output directories
+!**data/
+!**out/
+
