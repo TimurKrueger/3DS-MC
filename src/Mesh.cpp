@@ -1,7 +1,7 @@
 /*
  * Project: Interactive ARAP
  * File:    Mesh.cpp
- * Authors: Kilian Peis, Ömer Köse, Natalie Adam, Timur Krüger
+ * Authors: Kilian Peis, …mer Kšse, Natalie Adam, Timur KrŸger
  */
 
 #include "../include/Mesh.h"
