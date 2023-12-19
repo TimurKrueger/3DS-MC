@@ -13,6 +13,7 @@ class Mesh {
 private:
     Eigen::MatrixXd vertices, colors; // Vertex matrix & Color matrix
     Eigen::MatrixXi faces; // Face matrix
+    std::map<int, bool> m_anchorSelections;
 
 public:
     explicit Mesh(const std::string&);
@@ -22,6 +23,8 @@ public:
     void load(const std::string& filename);
     // Apply force to a vertex
     void applyForce(int vertexIndex, const Eigen::Vector3d& force);
+
+    int getClosestVertexId(const Eigen::MatrixXi& faces, int faceId, const Eigen::Vector3f& barycentricPosition);
 
     // Getter for vertices, faces and colors
     const Eigen::MatrixXd& getVertices() const;

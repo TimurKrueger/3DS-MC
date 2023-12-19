@@ -19,9 +19,23 @@ void Mesh::load(const std::string& filename) {
 }
 
 void Mesh::applyForce(int vertexIndex, const Eigen::Vector3d& force) {
+    m_anchorSelections[1] = true;
+
     if (vertexIndex >= 0 && vertexIndex < vertices.rows()) {
         vertices.row(vertexIndex) += force.transpose();
     }
+}
+
+int Mesh::getClosestVertexId(const Eigen::MatrixXi& faces, int faceId, const Eigen::Vector3f& barycentricPosition) {
+    int closestVertex = -1;
+    float maxBarycentric = -1.0f;
+    for (int i = 0; i < 3; ++i) {
+        if (barycentricPosition[i] > maxBarycentric) {
+            maxBarycentric = barycentricPosition[i];
+            closestVertex = faces(faceId, i);
+        }
+    }
+    return closestVertex;
 }
 
 const Eigen::MatrixXd& Mesh::getVertices() const {

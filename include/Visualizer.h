@@ -27,6 +27,8 @@ public:
     void updateMesh(const Mesh& mesh);
     // Set the keyboard callback
     void setKeyboardCallback(const std::function<void(unsigned char, int)>& callback);
+    // Set the mouse callback
+    void setMouseCallback(const std::function<void(const Eigen::Vector2f&)>& callback);
     // Launch the viewer
     void launch();
 };

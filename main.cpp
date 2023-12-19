@@ -26,7 +26,11 @@ int main() {
 
 		// Update the visualization
 		visualizer.updateMesh(currentMesh);
-		});
+	});
+
+	visualizer.setMouseCallback([&](const Eigen::Vector2f& mousePosition) {
+		std::cout << "Pressed mouse at pos: " << mousePosition << std::endl;
+	});
 
 	// Launch the visualizer
 	visualizer.launch();
