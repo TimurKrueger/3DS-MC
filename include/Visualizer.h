@@ -11,19 +11,23 @@
 #include <igl/unproject_onto_mesh.h>
 #include "Mesh.h"
 
-class Visualizer
-{
+class Visualizer {
+private:
+    igl::opengl::glfw::Viewer viewer;
+    Mesh currentMesh;
 public:
     explicit Visualizer(const std::string& meshPath);
     ~Visualizer() = default;
-    
-    void setMesh(const std::string& meshPath);
-    void setWireframeLineMode(bool wireframe);
+
+    // Get current mesh
+    Mesh getCurrentMesh();
+    // Set the mesh for visualization
+    void setMesh(const Mesh& mesh);
+    // Update the mesh visualization
+    void updateMesh(const Mesh& mesh);
+    // Set the keyboard callback
+    void setKeyboardCallback(const std::function<void(unsigned char, int)>& callback);
+    // Launch the viewer
     void launch();
-private:
-    igl::opengl::glfw::Viewer m_viewer;
-    Mesh m_mesh; // For now, we will have only one mesh
 };
-
 #endif
-

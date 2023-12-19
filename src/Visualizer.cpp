@@ -1,30 +1,38 @@
+/*
+ * Project: Interactive ARAP
+ * File:    Visualizer.cpp
+ * Authors: Kilian Peis, Ömer Köse, Natalie Adam, Timur Krüger
+*/
+
 #include "../include/Visualizer.h"
 
-
-Visualizer::Visualizer(const std::string& meshPath)
-    :
-    m_mesh{meshPath}
-{
-    m_viewer.data().set_mesh(m_mesh.m_vertices, m_mesh.m_faces);
-    m_viewer.data().set_colors(m_mesh.m_colors);
+Visualizer::Visualizer(const std::string& meshPath) :currentMesh(meshPath) {
+    viewer.data().set_mesh(currentMesh.getVertices(), currentMesh.getFaces());
+    viewer.data().set_colors(currentMesh.getColors());
 }
 
-void Visualizer::setMesh(const std::string& meshPath)
-{
-    m_mesh = Mesh(meshPath);
-    m_viewer.data().set_mesh(m_mesh.m_vertices, m_mesh.m_faces);
-    m_viewer.data().set_colors(m_mesh.m_colors);
-    return;
+Mesh Visualizer::getCurrentMesh() {
+    return currentMesh;
 }
 
-void Visualizer::setWireframeLineMode(bool wireframe)
-{
-    m_viewer.data().show_lines = wireframe;
+void Visualizer::setMesh(const Mesh& mesh) {
+    currentMesh = mesh;
+    viewer.data().set_mesh(currentMesh.getVertices(), currentMesh.getFaces());
 }
 
-void Visualizer::launch()
-{
-    setWireframeLineMode(false);
-    m_viewer.launch();
-    return;
+void Visualizer::updateMesh(const Mesh& mesh) {
+    currentMesh = mesh;
+    viewer.data().set_vertices(currentMesh.getVertices());
+    viewer.data().compute_normals();
+}
+
+void Visualizer::launch() {
+    viewer.launch();
+}
+
+void Visualizer::setKeyboardCallback(const std::function<void(unsigned char, int)>& callback) {
+    viewer.callback_key_down = [callback](igl::opengl::glfw::Viewer&, unsigned char key, int modifier) {
+        callback(key, modifier);
+        return false;
+    };
 }
