@@ -13,7 +13,6 @@ class Mesh {
 private:
     Eigen::MatrixXd vertices, colors; // Vertex matrix & Color matrix
     Eigen::MatrixXi faces; // Face matrix
-    std::map<int, bool> m_anchorSelections;
 
 public:
     explicit Mesh(const std::string&);

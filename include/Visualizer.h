@@ -15,20 +15,26 @@ class Visualizer {
 private:
     igl::opengl::glfw::Viewer viewer;
     Mesh currentMesh;
+    bool selectionFixedFaces;
 public:
     explicit Visualizer(const std::string& meshPath);
     ~Visualizer() = default;
 
     // Get current mesh
     Mesh getCurrentMesh();
+    // Get the mouse Position in screen position
+    Eigen::Vector2f getMousePosition();
     // Set the mesh for visualization
     void setMesh(const Mesh& mesh);
     // Update the mesh visualization
     void updateMesh(const Mesh& mesh);
     // Set the keyboard callback
-    void setKeyboardCallback(const std::function<void(unsigned char, int)>& callback);
+    //void setKeyboardCallback(const std::function<void(unsigned char, int)>& callback);
+    void handleKeyDown();
+    void handleKeyRelease();
     // Set the mouse callback
-    void setMouseCallback(const std::function<void(const Eigen::Vector2f&)>& callback);
+    //void setMouseCallback(const std::function<void(const Eigen::Vector2f&)>& callback);
+    void handleMouseDown();
     // Launch the viewer
     void launch();
 };

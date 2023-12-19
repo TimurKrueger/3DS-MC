@@ -19,7 +19,6 @@ void Mesh::load(const std::string& filename) {
 }
 
 void Mesh::applyForce(int vertexIndex, const Eigen::Vector3d& force) {
-    m_anchorSelections[1] = true;
 
     if (vertexIndex >= 0 && vertexIndex < vertices.rows()) {
         vertices.row(vertexIndex) += force.transpose();
