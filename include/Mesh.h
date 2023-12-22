@@ -27,5 +27,7 @@ public:
     const Eigen::MatrixXd& getVertices() const;
     const Eigen::MatrixXd& getColors() const;
     const Eigen::MatrixXi& getFaces() const;
+    // Getter for statistics
+    int getNumVertices() const;
 };
 #endif

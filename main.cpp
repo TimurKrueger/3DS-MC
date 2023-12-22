@@ -6,9 +6,12 @@
 
 #include "include/Visualizer.h"
 #include "include/Mesh.h"
-#include <iostream>;
+#include "include/Arap.h"
+#include <iostream>
 
-int main() {
+
+int main() 
+{
 	// Define the force vector and the target vertex index
 	Eigen::Vector3d force(0, -20, 0); // Example force
 	int target_vertex_index = 300; // Example vertex index
@@ -27,6 +30,9 @@ int main() {
 		// Update the visualization
 		visualizer.updateMesh(currentMesh);
 		});
+   
+    
+    Arap arap(currentMesh);
 
 	// Launch the visualizer
 	visualizer.launch();

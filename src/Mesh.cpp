@@ -35,3 +35,8 @@ const Eigen::MatrixXi& Mesh::getFaces() const {
 const Eigen::MatrixXd& Mesh::getColors() const {
     return colors;
 }
+
+int Mesh::getNumVertices() const
+{
+    return vertices.rows();
+}
