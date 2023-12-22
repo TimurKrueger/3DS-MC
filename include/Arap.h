@@ -9,6 +9,7 @@
 #define ARAP_H
 
 #include <Eigen/Core>
+#include <Eigen/Dense>
 #include "Mesh.h"
 
 #include <vector>
