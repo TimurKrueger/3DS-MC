@@ -10,6 +10,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include "Mesh.h"
 
 #include <vector>
@@ -22,11 +23,13 @@ public:
     explicit Arap(Mesh& mesh);
 private:
     void m_constructNeighborhood();
-    void m_updateWeightMatrix();
+    // void m_updateWeightMatrix();
+    void m_updateSparseWeightMatrix();
 private:
     Mesh& m_mesh;
     std::vector<std::vector<int>> m_neighbors;
-    Eigen::MatrixXd m_weightMatrix; // This will be updated per solve
+    // Eigen::MatrixXd m_weightMatrix; // This will be updated per solve
+    Eigen::SparseMatrix<double> m_weightMatrix; // This will be updated per solve
 };
 
 #endif
