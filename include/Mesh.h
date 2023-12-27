@@ -13,6 +13,7 @@ class Mesh {
 private:
     Eigen::MatrixXd vertices, colors; // Vertex matrix & Color matrix
     Eigen::MatrixXi faces; // Face matrix
+    Eigen::MatrixXd initColors;
 
 public:
     explicit Mesh(const std::string&);
@@ -29,5 +30,6 @@ public:
     const Eigen::MatrixXd& getVertices() const;
     const Eigen::MatrixXd& getColors() const;
     const Eigen::MatrixXi& getFaces() const;
+    const Eigen::MatrixXd& getInitColors() const;
 };
 #endif

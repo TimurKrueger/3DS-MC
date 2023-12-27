@@ -12,6 +12,7 @@
 Mesh::Mesh(const std::string& modelName) {
     igl::readPLY(modelName, vertices, faces);
     colors = Eigen::MatrixXd::Constant(faces.rows(), 3, 1);
+    initColors = Eigen::MatrixXd::Constant(faces.rows(), 3, 1);
 }
 
 void Mesh::load(const std::string& filename) {
@@ -47,4 +48,8 @@ const Eigen::MatrixXi& Mesh::getFaces() const {
 
 const Eigen::MatrixXd& Mesh::getColors() const {
     return colors;
+}
+
+const Eigen::MatrixXd& Mesh::getInitColors() const {
+    return initColors;
 }

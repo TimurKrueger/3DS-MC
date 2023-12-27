@@ -9,7 +9,8 @@
 Visualizer::Visualizer(const std::string& meshPath) 
     :
     currentMesh(meshPath), 
-    selectionFixedFaces(false) 
+    selectionFixedFaces(false) ,
+    fixedMovement(false)
 {
     viewer.data().set_mesh(currentMesh.getVertices(), currentMesh.getFaces());
     viewer.data().set_colors(currentMesh.getColors());
@@ -63,6 +64,35 @@ void Visualizer::handleMouseDown() {
             if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
                 viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
                 faceId, barycentricPosition)) {
+
+                bool selected = !selectedFaces[faceId];
+                std::cout << "selected: "<<selected << std::endl;
+
+                selectedFaces[faceId] = selected;
+
+                if (selected) {
+                    const Eigen::Vector3d yellowColor(255, 255, 0);
+
+                    Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());  // Remove constness
+                    Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
+                    faceColorBlock = yellowColor.transpose();
+                }
+                else {
+                    Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());  // Remove constness
+                    Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
+                    faceColorBlock = currentMesh.getInitColors().row(faceId).transpose();
+                }
+
+
+                viewer.data().set_colors(currentMesh.getColors());
+            }
+        }
+        else if (fixedMovement) {
+            int faceId;
+            Eigen::Vector3f barycentricPosition;
+            if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
+                viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
+                faceId, barycentricPosition)) {
                 Eigen::Vector3d force(0, -20, 0);
 
                 int vertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), faceId, barycentricPosition);
@@ -72,6 +102,7 @@ void Visualizer::handleMouseDown() {
                 return true;
             }
         }
+
         return false;
     };
 }
@@ -95,6 +126,14 @@ void Visualizer::handleKeyDown() {
             case '1':
                 selectionFixedFaces = true;
                 return true;
+            case '2':
+                fixedMovement = true;
+                return true;
+            case 'r':
+                selectedFaces.clear();
+                selectionFixedFaces = false;
+                viewer.data().set_colors(currentMesh.getInitColors());
+                return true;
         }
         return false;
     };
@@ -103,14 +142,12 @@ void Visualizer::handleKeyDown() {
 void Visualizer::handleKeyRelease() {
     viewer.callback_key_up = [this](igl::opengl::glfw::Viewer&, unsigned char key, int modifier) {
 
-        std::cout << "Pressed key: "<< key << std::endl;
-        // Define the force vector and the target vertex index
-        Eigen::Vector3d force(0, -20, 0); // Example force
-        int target_vertex_index = 300; // Example vertex index
-
         switch (key) {
             case '1':
                 selectionFixedFaces = false;
+                return true;
+            case '2':
+                fixedMovement = false;
                 return true;
         }
         return false;

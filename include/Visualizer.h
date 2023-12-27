@@ -10,12 +10,16 @@
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/unproject_onto_mesh.h>
 #include "Mesh.h"
+#include <map>
 
 class Visualizer {
 private:
     igl::opengl::glfw::Viewer viewer;
     Mesh currentMesh;
+    std::map<int, bool> selectedFaces;
     bool selectionFixedFaces;
+    bool fixedMovement;
+    
 public:
     explicit Visualizer(const std::string& meshPath);
     ~Visualizer() = default;
