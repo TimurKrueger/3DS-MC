@@ -1,7 +1,7 @@
 /*
  * Project: Interactive ARAP
  * File:    Mesh.cpp
- * Authors: Kilian Peis, ÷mer Kˆse, Natalie Adam, Timur Kr¸ger
+ * Authors: Kilian Peis, Ömer Köse, Natalie Adam, Timur Krüger
  */
 
 
@@ -14,8 +14,18 @@ Arap::Arap(Mesh& mesh)
     m_constructNeighborhood();
     // m_updateWeightMatrix();
     m_updateSparseWeightMatrix();
+    m_setSystemMatrix();
     
     std::cout << m_weightMatrix.coeff(0, 0) << "\n";
+
+    // for debugging
+    /*
+    for (int k = 0; k < m_systemMatrix.outerSize(); ++k) {
+        for (Eigen::SparseMatrix<double, Eigen::RowMajor>::InnerIterator it(m_systemMatrix, k); it; ++it) {
+            std::cout << "(" << it.row() << ", " << it.col() << ") = " << it.value() << "\n";
+        }
+    }
+    */
 }
 
 void Arap::m_constructNeighborhood()
@@ -126,4 +136,13 @@ void Arap::m_updateSparseWeightMatrix()
     m_weightMatrix.setFromTriplets(triplets.begin(), triplets.end());
 }
 
+void Arap::m_setSystemMatrix()
+{
+    m_systemMatrix.resize(m_weightMatrix.rows(), m_weightMatrix.cols());
+    m_systemMatrix = -m_weightMatrix;
 
+    for (int i = 0; i < m_weightMatrix.rows(); ++i)
+    {
+        m_systemMatrix.coeffRef(i, i) += -m_systemMatrix.row(i).sum();
+    }
+}
