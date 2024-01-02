@@ -1,7 +1,7 @@
 /*
  * Project: Interactive ARAP
  * File:    Mesh.cpp
- * Authors: Kilian Peis, Ömer Köse, Natalie Adam, Timur Krüger
+ * Authors: Kilian Peis, ï¿½mer Kï¿½se, Natalie Adam, Timur Krï¿½ger
  */
 
 #include <igl/readPLY.h>
@@ -52,4 +52,9 @@ const Eigen::MatrixXd& Mesh::getColors() const {
 
 const Eigen::MatrixXd& Mesh::getInitColors() const {
     return initColors;
+}
+
+int Mesh::getNumVertices() const
+{
+    return vertices.rows();
 }

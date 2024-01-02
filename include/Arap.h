@@ -1,25 +1,39 @@
 /*
  * Project: Interactive ARAP
- * File:    Arap.h
- * Authors: Kilian Peis, Ömer Köse, Natalie Adam, Timur Krüger
+ * File:    Mesh.h
+ * Authors: Kilian Peis, Ã–mer KÃ¶se, Natalie Adam, Timur KrÃ¼ger
 */
+
 
 #ifndef ARAP_H
 #define ARAP_H
 
 #include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include "Mesh.h"
 
-class Arap {
-private:
-    Mesh& mesh;
-    Eigen::SparseMatrix<double> systemMatrix;
+#include <vector>
+#include <algorithm>
 
+
+class Arap
+{
 public:
     explicit Arap(Mesh& mesh);
-
+private:
+    void m_constructNeighborhood();
+    // void m_updateWeightMatrix();
+    void m_updateSparseWeightMatrix();
+    void m_setSystemMatrix();
     void collectFixedVertices(const std::vector<int>& fixedVertices);
     void updateSystemMatrix();
+private:
+    Mesh& m_mesh;
+    std::vector<std::vector<int>> m_neighbors;
+    // Eigen::MatrixXd m_weightMatrix; // This will be updated per solve
+    Eigen::SparseMatrix<double> m_weightMatrix; // This will be updated per solve
+    Eigen::SparseMatrix<double, Eigen::RowMajor> m_systemMatrix;
 };
 
 #endif
