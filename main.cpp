@@ -13,8 +13,9 @@ int main() {
 	// Create an instance Visualizer class
 	Visualizer visualizer("../Data/Cow/cow.ply");
 	Mesh currentMesh = visualizer.getCurrentMesh();
+	
+	Arap arap(visualizer);
 
 	// Launch the visualizer
-	Arap arap(currentMesh);
 	visualizer.launch();
 };

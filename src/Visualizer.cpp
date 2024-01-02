@@ -20,6 +20,10 @@ Mesh Visualizer::getCurrentMesh() {
     return currentMesh;
 }
 
+std::map<int, bool> Visualizer::getFixedFaces() {
+    return selectedFaces;
+}
+
 void Visualizer::setMesh(const Mesh& mesh) {
     currentMesh = mesh;
     viewer.data().set_mesh(currentMesh.getVertices(), currentMesh.getFaces());
@@ -82,6 +86,9 @@ void Visualizer::handleMouseDown() {
                     Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
                     faceColorBlock = currentMesh.getInitColors().row(faceId).transpose();
                 }
+
+
+
                 viewer.data().set_colors(currentMesh.getColors());
             }
         }
@@ -97,6 +104,7 @@ void Visualizer::handleMouseDown() {
                 currentMesh.applyForce(vertexId, force);
 
                 updateMesh(currentMesh);
+
                 return true;
             }
         }
