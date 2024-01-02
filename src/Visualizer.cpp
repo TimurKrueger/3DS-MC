@@ -71,19 +71,17 @@ void Visualizer::handleMouseDown() {
                 selectedFaces[faceId] = selected;
 
                 if (selected) {
-                    const Eigen::Vector3d yellowColor(255, 255, 0);
+                    const Eigen::Vector3d selectedColor(255, 0, 0);
 
                     Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());  // Remove constness
                     Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
-                    faceColorBlock = yellowColor.transpose();
+                    faceColorBlock = selectedColor.transpose();
                 }
                 else {
                     Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());  // Remove constness
                     Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
                     faceColorBlock = currentMesh.getInitColors().row(faceId).transpose();
                 }
-
-
                 viewer.data().set_colors(currentMesh.getColors());
             }
         }
