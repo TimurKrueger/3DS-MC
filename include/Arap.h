@@ -26,6 +26,7 @@ private:
     // void m_updateWeightMatrix();
     void m_updateSparseWeightMatrix();
     void m_setSystemMatrix();
+    std::vector<Eigen::Matrix3d> m_computeRotations(Eigen::MatrixXd&);
 private:
     Mesh& m_mesh;
     std::vector<std::vector<int>> m_neighbors;

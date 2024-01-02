@@ -141,8 +141,51 @@ void Arap::m_setSystemMatrix()
     m_systemMatrix.resize(m_weightMatrix.rows(), m_weightMatrix.cols());
     m_systemMatrix = -m_weightMatrix;
 
+    // Add diagonal value
     for (int i = 0; i < m_weightMatrix.rows(); ++i)
     {
         m_systemMatrix.coeffRef(i, i) += -m_systemMatrix.row(i).sum();
     }
+}
+
+std::vector<Eigen::Matrix3d> Arap::m_computeRotations(Eigen::MatrixXd& V_deformed)
+{
+    const Eigen::MatrixXd& V = m_mesh.getVertices();
+    std::vector<Eigen::Matrix3d> R(V.rows());
+
+    for (int i = 0; i < V.rows(); ++i)
+    {
+        // Edges of vertices
+        Eigen::MatrixXd P(3, m_neighbors[i].size());
+        // Diagonal matrix with weights
+        Eigen::MatrixXd D(m_neighbors[i].size(), m_neighbors[i].size());
+        // Edges of deformed vertices
+        Eigen::MatrixXd P_p(3, m_neighbors[i].size());
+
+        for (int j = 0; j < m_neighbors[i].size(); ++j)
+        {
+            P.col(j) = V.row(i) - V.row(m_neighbors[i][j]);
+            D(j, j) = m_weightMatrix.coeffRef(i, m_neighbors[i][j]);
+            P_p.col(j) = V_deformed.row(i) - V_deformed.row(m_neighbors[i][j]);
+        }
+        
+        // Covariance matrix: S = P * D * P'^T
+        Eigen::MatrixXd S = P * D * P_p.transpose();
+
+        // Perform SVD: S = U * sum(V^T)
+        Eigen::JacobiSVD<Eigen::MatrixXd> svd(S, Eigen::ComputeThinU | Eigen::ComputeThinV);
+        Eigen::MatrixXd U = svd.matrixU();
+        Eigen::MatrixXd V = svd.matrixV();
+
+        // Ensure determinant is positive
+        if (U.determinant() < 0)
+        {
+            U.col(2) *= -1.0;
+        }
+
+        // R = V * U^T
+        R[i] = V * U.transpose();
+    }
+
+    return R;
 }
