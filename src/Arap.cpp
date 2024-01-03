@@ -28,6 +28,55 @@ Arap::Arap(Mesh& mesh)
     */
 }
 
+/*
+    The main functions that computes the deformation of the mesh referenced in the class.
+    TODO: Discuss whether we should incorporate constraints inside the function (by giving the constraint indices as a parameter) or incorporate it outside and then call this function.
+    This is just a semantic flavour both will work. I think incorporating constraints inside the function would be better as it will be cleaner in the visualizer end
+ 
+    TODO: Discuss whether we should update the mesh vertices in this function, or we should do it in the caller side.
+*/
+Eigen::MatrixXd Arap::computeDeformation()
+{
+    // First update the weight and system matrices as they changes when mesh gets deformed.
+    m_updateSparseWeightMatrix();
+    m_setSystemMatrix();
+    // I would say also set constraints here
+    
+    // As the Laplacian is symmetric positive definite (actually it is semidefinite we need to be careful here even though in the paper it says it is positive definite), we can use Cholesky factorization
+    // Idk, why but it seems Cholesky factorization does not work with RowMajor Sparse Matrices (maybe I did something wrong)
+    // Converting System Matrix to the Column Major from Row Major
+    Eigen::SparseMatrix<double, Eigen::ColMajor> m_systemMatrixColMajor(m_systemMatrix);
+    Eigen::SimplicialCholesky<Eigen::SparseMatrix<double, Eigen::ColMajor>> chol(m_systemMatrixColMajor); // Factorize the system matrix
+    // Initial guess will be the vertices of the previous frame (which are the current vertices we have)
+    Eigen::MatrixXd deformedVertices = m_mesh.getVertices();
+    
+    double prevRigidityEnergy = std::numeric_limits<double>::max();
+    for(int i = 0; i < MAX_ITERATIONS; ++i)
+    {
+        // Optimize for the rotations
+        std::vector<Eigen::Matrix3d> rotations = m_computeRotations(deformedVertices);
+        
+        // Compuite RHS
+        Eigen::MatrixXd rhs = m_computeRHS(rotations);
+        
+        // Optimize for the vertices
+        deformedVertices = chol.solve(rhs);
+        
+        double rigidityEnergy = m_computeRigidityEnergy(deformedVertices, rotations);
+        std::cout << "Rigidity Energy at the iteration " << i << " is " << rigidityEnergy << "\n";
+        // We can stop prematurely
+        if(abs(rigidityEnergy - prevRigidityEnergy) <= RIGIDITY_ENERGY_THRESHOLD)
+        {
+            break;
+        }
+        
+        prevRigidityEnergy = rigidityEnergy;
+    }
+    
+    return deformedVertices;
+    
+}
+
 void Arap::m_constructNeighborhood()
 {
     m_neighbors.resize(m_mesh.getNumVertices());
@@ -188,4 +237,37 @@ std::vector<Eigen::Matrix3d> Arap::m_computeRotations(Eigen::MatrixXd& V_deforme
     }
 
     return R;
+}
+
+
+/*
+    Computes the rigidity energy given the deformed vertices and the rotations. We will use it as an additional stopping condition.
+*/
+double Arap::m_computeRigidityEnergy(const Eigen::MatrixXd& V_deformed, const std::vector<Eigen::Matrix3d>& rotations)
+{
+    double rigidityEnergy = 0.0;
+    const Eigen::MatrixXd& V = m_mesh.getVertices();
+    
+    for(int i = 0; i < V.rows(); ++i)
+    {
+        double energy = 0.0;
+        const std::vector<int>& neighbors = m_neighbors[i];
+        for(int j = 0; j < neighbors.size(); ++j)
+        {
+            int neighborIdx = neighbors[j];
+            Eigen::Vector3d diffDeformed = V_deformed.row(i) - V_deformed.row(neighborIdx);
+            Eigen::Vector3d diffInitial  = V.row(i) - V.row(neighborIdx);
+            energy += m_weightMatrix.coeff(i, neighborIdx) * (diffDeformed - rotations[i] * diffInitial).squaredNorm();
+        }
+        
+        rigidityEnergy += m_weightMatrix.coeff(i, i) * energy;
+    }
+    
+    return rigidityEnergy;
+}
+
+
+Eigen::MatrixXd Arap::m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations)
+{
+    return m_mesh.getVertices();
 }
