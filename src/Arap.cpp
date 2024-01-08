@@ -287,7 +287,7 @@ Eigen::MatrixXd Arap::m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations
         {
             continue;
         }
-        Eigen::Vector3d row = Eigen::Vector3d(0.0);
+        Eigen::Vector3d row = Eigen::Vector3d(0.0, 0.0, 0.0);
         const std::vector<int>& neighbors = m_neighbors[i];
         for(int j = 0; j < neighbors.size(); ++j)
         {
