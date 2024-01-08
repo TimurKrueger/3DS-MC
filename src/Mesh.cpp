@@ -26,6 +26,12 @@ void Mesh::applyForce(int vertexIndex, const Eigen::Vector3d& force) {
     }
 }
 
+void Mesh::setVertexPos(int vertexIndex, const Eigen::Vector3d& newPos) {
+    if (vertexIndex >= 0 && vertexIndex < vertices.rows()) {
+        vertices.row(vertexIndex) = newPos.transpose();
+    }
+}
+
 int Mesh::getClosestVertexId(const Eigen::MatrixXi& faces, int faceId, const Eigen::Vector3f& barycentricPosition) {
     int closestVertex = -1;
     float maxBarycentric = -1.0f;

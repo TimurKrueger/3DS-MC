@@ -19,6 +19,8 @@ private:
     std::map<int, bool> selectedFaces;
     bool selectionFixedFaces;
     bool fixedMovement;
+    bool movingVertex;
+    int movingVertexId;
     
 public:
     explicit Visualizer(const std::string& meshPath);
@@ -28,6 +30,9 @@ public:
     Mesh getCurrentMesh();
     // Get the mouse Position in screen position
     Eigen::Vector2f getMousePosition();
+
+
+    std::map<int, bool> getFixedFaces();
     // Set the mesh for visualization
     void setMesh(const Mesh& mesh);
     // Update the mesh visualization
@@ -39,6 +44,7 @@ public:
     // Set the mouse callback
     //void setMouseCallback(const std::function<void(const Eigen::Vector2f&)>& callback);
     void handleMouseDown();
+    void handleMouseMove();
     // Launch the viewer
     void launch();
 };

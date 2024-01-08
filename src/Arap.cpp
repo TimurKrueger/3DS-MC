@@ -7,9 +7,10 @@
 
 #include "../include/Arap.h"
 
-Arap::Arap(Mesh& mesh)
+Arap::Arap(Visualizer& visualizer)
     :
-    m_mesh(mesh)
+    m_visualizer(visualizer),
+    m_mesh(visualizer.getCurrentMesh())
 {
     m_constructNeighborhood();
     // m_updateWeightMatrix();
@@ -28,25 +29,37 @@ Arap::Arap(Mesh& mesh)
     */
 }
 
-void Arap::collectFixedVertices(const std::vector<int>& fixedVertices) {
+void Arap::collectFixedVertices() {
     // Example: Store the fixed vertices indices for later use
     // This could be stored in a member variable for use in updateSystemMatrix
+    fixedVertices.clear();
+
+    for (auto pair : m_visualizer.getFixedFaces()) {
+        Eigen::VectorXi vertices = m_mesh.getFaces().row(pair.first);
+
+        for (int i = 0; i < vertices.size(); i++) {
+            fixedVertices.push_back(vertices[i]);
+        }
+    }
 }
 
-void Arap::updateSystemMatrix() {
-    // This function should update the system matrix based on constraints
-    // The implementation depends on how your ARAP system is designed
+void Arap::updateSystemMatrix(int movedVertex) {
 
-    // Example pseudo-implementation:
-    // 1. Reset or initialize the system matrix
-    // 2. Iterate over the mesh's vertices
-    // 3. For each vertex, compute its contribution to the system matrix
-    //    This may involve calculating local transformations and rotations
-    // 4. Consider the fixed vertices in the system matrix computation
-    // 5. Apply any additional constraints or conditions
-    // 6. Finalize the system matrix
+    collectFixedVertices();
 
-    // Note: The actual implementation details will vary greatly depending on your specific ARAP setup and the data structures you're using.
+    //copy matrix
+    Eigen::SparseMatrix<double> updatedSystemMatrix = m_systemMatrix;
+    int rowSize = m_systemMatrix.cols();
+
+    //all fixed vertices will not be modified
+    for (int vertex : fixedVertices) {
+        for (Eigen::SparseMatrix<double>::InnerIterator it(updatedSystemMatrix, vertex); it; ++it) {
+            updatedSystemMatrix.coeffRef(vertex, it.col()) = 0.0;
+        }
+        updatedSystemMatrix.coeffRef(vertex, vertex) = 1.0;
+    }
+
+    m_systemMatrix = updatedSystemMatrix;
 }
 
 void Arap::m_constructNeighborhood()

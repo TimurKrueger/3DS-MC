@@ -23,6 +23,7 @@ public:
     void load(const std::string& filename);
     // Apply force to a vertex
     void applyForce(int vertexIndex, const Eigen::Vector3d& force);
+    void setVertexPos(int vertexIndex, const Eigen::Vector3d& newPos);
 
     int getClosestVertexId(const Eigen::MatrixXi& faces, int faceId, const Eigen::Vector3f& barycentricPosition);
 

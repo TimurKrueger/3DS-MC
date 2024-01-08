@@ -10,7 +10,9 @@ Visualizer::Visualizer(const std::string& meshPath)
     :
     currentMesh(meshPath), 
     selectionFixedFaces(false) ,
-    fixedMovement(false)
+    fixedMovement(false),
+    movingVertex(false),
+    movingVertexId(-1)
 {
     viewer.data().set_mesh(currentMesh.getVertices(), currentMesh.getFaces());
     viewer.data().set_colors(currentMesh.getColors());
@@ -35,7 +37,12 @@ void Visualizer::launch() {
     handleKeyDown();
     handleKeyRelease();
     handleMouseDown();
+    handleMouseMove();
     viewer.launch();
+}
+
+std::map<int, bool> Visualizer::getFixedFaces() {
+    return selectedFaces;
 }
 
 Eigen::Vector2f Visualizer::getMousePosition()
@@ -54,10 +61,44 @@ Eigen::Vector2f Visualizer::getMousePosition()
     return Eigen::Vector2f(viewer_mouse_x, viewer_mouse_y);
 }
 
+void Visualizer::handleMouseMove() {
+    viewer.callback_mouse_move = [this](igl::opengl::glfw::Viewer& viewer, int button, int modifier) -> bool {
+        if (movingVertex) {
+            if (movingVertexId >= 0) {
+                Eigen::Vector2f mousePosition = getMousePosition();
+                Eigen::Vector3f mouseWorldPos;
+                std::cout << "moving the thinf" << std::endl;
+                if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
+                    viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
+                    movingVertexId, mouseWorldPos)) {
+                    int vertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), movingVertexId, mouseWorldPos);
+
+                    //-------------
+                    // edit this, used from old solution!!!
+                    Eigen::Vector3f vertexPosition = {
+                        (float)currentMesh.getVertices().row(vertexId).x(), (float)currentMesh.getVertices().row(vertexId).y(), (float)currentMesh.getVertices().row(vertexId).z()
+                    };
+
+                    Eigen::Vector3f projection = igl::project(vertexPosition, viewer.core().view, viewer.core().proj, viewer.core().viewport);
+                    Eigen::Vector3f worldPosition = igl::unproject(Eigen::Vector3f(mousePosition.x(), mousePosition.y(), projection.z()),
+                        viewer.core().view, viewer.core().proj, viewer.core().viewport);
+
+                    //-------------
+
+
+                    currentMesh.setVertexPos(vertexId, worldPosition.cast<double>());
+                    updateMesh(currentMesh);
+                }
+            }
+        }
+        return false;
+    };
+}
+
 void Visualizer::handleMouseDown() {
     viewer.callback_mouse_down = [this](igl::opengl::glfw::Viewer& viewer, int button, int modifier) -> bool {
         Eigen::Vector2f mousePosition = getMousePosition();
-        std::cout << selectionFixedFaces << std::endl;
+        //std::cout << selectionFixedFaces << std::endl;
         if (selectionFixedFaces) {
             int faceId;
             Eigen::Vector3f barycentricPosition;
@@ -100,6 +141,19 @@ void Visualizer::handleMouseDown() {
                 return true;
             }
         }
+        else if (movingVertex) {
+           if (movingVertexId == -1) {
+                Eigen::Vector2f mousePosition = getMousePosition();
+                int faceId;
+                Eigen::Vector3f mouseWorldPos;
+                std::cout << "moving Vertex" << std::endl;
+                if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
+                    viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
+                    faceId, mouseWorldPos)) {
+                    movingVertexId = faceId;
+                }
+            }
+        }
 
         return false;
     };
@@ -127,6 +181,9 @@ void Visualizer::handleKeyDown() {
             case '2':
                 fixedMovement = true;
                 return true;
+            case '3':
+                movingVertex = true;
+                return true;
             case 'r':
                 selectedFaces.clear();
                 selectionFixedFaces = false;
@@ -146,6 +203,10 @@ void Visualizer::handleKeyRelease() {
                 return true;
             case '2':
                 fixedMovement = false;
+                return true;
+            case '3':
+                movingVertex = false;
+                movingVertexId = -1;
                 return true;
         }
         return false;
