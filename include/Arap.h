@@ -15,11 +15,12 @@
 #include "Mesh.h"
 
 #include <vector>
+#include <unordered_set>
 #include <algorithm>
 #include <limits>
 
 
-// TODO: Disscuss about these constants
+// TODO: Discuss about these constants
 #define RIGIDITY_ENERGY_THRESHOLD 1e-3 // Not sure what this should be we should analyze the rigidity energy
 #define MAX_ITERATIONS 10
 
@@ -42,6 +43,7 @@ private:
     Mesh& m_mesh;
     // Topology is constant, so it can be safely computed once and stored.
     std::vector<std::vector<int>> m_neighbors;
+    std::vector<int> m_fixedVertices; 
     // Eigen::MatrixXd m_weightMatrix; // This will be updated per solve
     Eigen::SparseMatrix<double, Eigen::RowMajor> m_weightMatrix; // This will be updated per solve
     Eigen::SparseMatrix<double, Eigen::RowMajor> m_systemMatrix; // Nothing but the Cotangent Laplacian, again this will be updated per solve as weights will be changing with deformation.

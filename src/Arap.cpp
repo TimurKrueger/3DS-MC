@@ -269,5 +269,45 @@ double Arap::m_computeRigidityEnergy(const Eigen::MatrixXd& V_deformed, const st
 
 Eigen::MatrixXd Arap::m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations)
 {
-    return m_mesh.getVertices();
+    Eigen::MatrixXd V = m_mesh.getVertices();
+    Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(V.rows(), 3);
+    
+    // To get rid of additional calculations for fixed vertices, we are going to skip them. To avoid linear lookups in each iteration we are going to put them in a unordered-set
+    std::unordered_set<int> fixedLookup;
+    for(int i = 0; i < m_fixedVertices.size(); ++i)
+    {
+        int fixedIdx = m_fixedVertices[i];
+        fixedLookup.insert(fixedIdx);
+    }
+    
+    for(int i = 0; i < V.rows(); ++i)
+    {
+        // If fixed just skip redundant calculations
+        if(fixedLookup.find(i) != fixedLookup.end())
+        {
+            continue;
+        }
+        Eigen::Vector3d row = Eigen::Vector3d(0.0);
+        const std::vector<int>& neighbors = m_neighbors[i];
+        for(int j = 0; j < neighbors.size(); ++j)
+        {
+            int neighborIdx = neighbors[j];
+            row += 0.5 * m_weightMatrix.coeff(i, neighborIdx) * (V.row(i) - V.row(neighborIdx)) * (rotations[i] + rotations[neighborIdx]);
+        }
+        
+        rhs.row(i) = row;
+    }
+    
+    // Fill the fixed entries
+    for(int i = 0; i < m_fixedVertices.size(); ++i)
+    {
+        // Fixed ones preserve their positions
+        int fixedIdx = m_fixedVertices[i];
+        rhs.row(fixedIdx) = V.row(fixedIdx);
+    }
+    
+    // TODO: Set the moving vertex position
+    // rhs.row(movingVertex) = movingVertexPosition;
+    
+    return rhs;
 }
