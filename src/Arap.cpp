@@ -7,10 +7,9 @@
 
 #include "../include/Arap.h"
 
-Arap::Arap(Visualizer& visualizer)
+Arap::Arap(Mesh& mesh)
     :
-    m_visualizer(visualizer),
-    m_mesh(visualizer.getCurrentMesh())
+    m_mesh(mesh)
 {
     m_constructNeighborhood();
     // m_updateWeightMatrix();
@@ -29,21 +28,12 @@ Arap::Arap(Visualizer& visualizer)
     */
 }
 
-void Arap::collectFixedVertices() {
+void Arap::collectFixedVertices(const std::vector<int>& fixedVertices) {
     // Example: Store the fixed vertices indices for later use
     // This could be stored in a member variable for use in updateSystemMatrix
-    fixedVertices.clear();
-
-    for (auto pair : m_visualizer.getFixedFaces()) {
-        Eigen::VectorXi vertices = m_mesh.getFaces().row(pair.first);
-
-        for (int i = 0; i < vertices.size(); i++) {
-            fixedVertices.push_back(vertices[i]);
-        }
-    }
 }
 
-void Arap::updateSystemMatrix(int movedVertex) {
+void Arap::updateSystemMatrix() {
     // This function should update the system matrix based on constraints
     // The implementation depends on how your ARAP system is designed
 
@@ -57,53 +47,6 @@ void Arap::updateSystemMatrix(int movedVertex) {
     // 6. Finalize the system matrix
 
     // Note: The actual implementation details will vary greatly depending on your specific ARAP setup and the data structures you're using.
-
-    collectFixedVertices();
-
-    //copy matrix
-    Eigen::SparseMatrix<double> updatedSystemMatrix = m_systemMatrix;
-    int rowSize = m_systemMatrix.cols();
-
-    //all fixed vertices will not be modified
-    for (int vertex : fixedVertices) {
-        updatedSystemMatrix.row(vertex) = 0.0;
-        updatedSystemMatrix.coeffRef(vertex, vertex) = 1.0;
-    }
-    
-    //updateSystemMatrixRecursively(movedVertex, updatedSystemMatrix);
-
-    m_systemMatrix = updatedSystemMatrix;
-}
-
-void Arap::updateSystemMatrixRecursively(int vertexIndex, Eigen::SparseMatrix<double>& Matrix) {
-    // Modify the entry based on your ARAP formulation or constraints for the current vertex
-    Matrix.coeffRef(vertexIndex, vertexIndex) = 1.0;
-
-    // Use a queue to perform a breadth-first traversal of neighbors
-    std::queue<int> vertexQueue;
-    vertexQueue.push(vertexIndex);
-
-    // Mark vertices to avoid processing them multiple times
-    std::vector<bool> visited(m_mesh.getNumVertices(), false);
-    visited[vertexIndex] = true;
-
-    while (!vertexQueue.empty()) {
-        int currentVertex = vertexQueue.front();
-        vertexQueue.pop();
-
-        for (int neighborIndex : m_neighbors[currentVertex]) {
-            if (!fixedVertices[neighborIndex]) {
-
-                Matrix.coeffRef(currentVertex, neighborIndex) = m_weightMatrix.coeff(vertexIndex, vertexIndex);
-                Matrix.coeffRef(neighborIndex, currentVertex) = m_weightMatrix.coeff(vertexIndex, vertexIndex);
-
-                if (!visited[neighborIndex]) {
-                    vertexQueue.push(neighborIndex);
-                    visited[neighborIndex] = true;
-                }
-            }
-        }
-    }
 }
 
 void Arap::m_constructNeighborhood()

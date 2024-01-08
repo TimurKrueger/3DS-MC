@@ -10,7 +10,6 @@
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/unproject_onto_mesh.h>
 #include "Mesh.h"
-#include "Arap.h"
 #include <map>
 
 class Visualizer {
@@ -27,8 +26,6 @@ public:
 
     // Get current mesh
     Mesh getCurrentMesh();
-    //getFixedFaces
-    std::map<int, bool> getFixedFaces();
     // Get the mouse Position in screen position
     Eigen::Vector2f getMousePosition();
     // Set the mesh for visualization
