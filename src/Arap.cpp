@@ -7,10 +7,9 @@
 
 #include "../include/Arap.h"
 
-Arap::Arap(Visualizer& visualizer)
+Arap::Arap(Mesh& mesh)
     :
-    m_visualizer(visualizer),
-    m_mesh(visualizer.getCurrentMesh())
+    m_mesh(mesh)
 {
     m_constructNeighborhood();
     // m_updateWeightMatrix();
@@ -29,12 +28,12 @@ Arap::Arap(Visualizer& visualizer)
     */
 }
 
-void Arap::collectFixedVertices() {
+void Arap::setFixedVertices(std::map<int, bool> fixedFaces) {
     // Example: Store the fixed vertices indices for later use
     // This could be stored in a member variable for use in updateSystemMatrix
     fixedVertices.clear();
 
-    for (auto pair : m_visualizer.getFixedFaces()) {
+    for (auto pair : fixedFaces) {
         Eigen::VectorXi vertices = m_mesh.getFaces().row(pair.first);
 
         for (int i = 0; i < vertices.size(); i++) {
@@ -44,8 +43,6 @@ void Arap::collectFixedVertices() {
 }
 
 void Arap::updateSystemMatrix(int movedVertex) {
-
-    collectFixedVertices();
 
     //copy matrix
     Eigen::SparseMatrix<double> updatedSystemMatrix = m_systemMatrix;

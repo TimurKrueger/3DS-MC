@@ -9,6 +9,7 @@
 Visualizer::Visualizer(const std::string& meshPath) 
     :
     currentMesh(meshPath), 
+    m_arap(currentMesh),
     selectionFixedFaces(false) ,
     fixedMovement(false),
     movingVertex(false),
@@ -27,6 +28,7 @@ void Visualizer::setMesh(const Mesh& mesh) {
     viewer.data().set_mesh(currentMesh.getVertices(), currentMesh.getFaces());
 }
 
+
 void Visualizer::updateMesh(const Mesh& mesh) {
     currentMesh = mesh;
     viewer.data().set_vertices(currentMesh.getVertices());
@@ -44,6 +46,7 @@ void Visualizer::launch() {
 std::map<int, bool> Visualizer::getFixedFaces() {
     return selectedFaces;
 }
+
 
 Eigen::Vector2f Visualizer::getMousePosition()
 {
@@ -161,8 +164,6 @@ void Visualizer::handleMouseDown() {
 
 void Visualizer::handleKeyDown() {
     viewer.callback_key_down = [this](igl::opengl::glfw::Viewer&, unsigned char key, int modifier) {
-
-        std::cout << "Pressed key" << std::endl;
         // Define the force vector and the target vertex index
         Eigen::Vector3d force(0, -20, 0); // Example force
         int target_vertex_index = 300; // Example vertex index
@@ -184,7 +185,8 @@ void Visualizer::handleKeyDown() {
             case '3':
                 movingVertex = true;
                 return true;
-            case 'r':
+            case 'R':
+                std::cout << "r" << std::endl;
                 selectedFaces.clear();
                 selectionFixedFaces = false;
                 viewer.data().set_colors(currentMesh.getInitColors());
@@ -200,6 +202,7 @@ void Visualizer::handleKeyRelease() {
         switch (key) {
             case '1':
                 selectionFixedFaces = false;
+                m_arap.setFixedVertices(getFixedFaces());
                 return true;
             case '2':
                 fixedMovement = false;

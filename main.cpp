@@ -15,6 +15,6 @@ int main() {
 	Mesh currentMesh = visualizer.getCurrentMesh();
 
 	// Launch the visualizer
-	Arap arap(visualizer);
+	//Arap arap(currentMesh);
 	visualizer.launch();
 };

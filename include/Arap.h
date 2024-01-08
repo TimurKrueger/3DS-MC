@@ -12,7 +12,6 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "Mesh.h"
-#include "Visualizer.h"
 
 #include <vector>
 #include <algorithm>
@@ -21,23 +20,23 @@
 class Arap
 {
 public:
-    explicit Arap(Visualizer& visualizer);
+    explicit Arap(Mesh& mesh);
 private:
     void m_constructNeighborhood();
     // void m_updateWeightMatrix();
     void m_updateSparseWeightMatrix();
     void m_setSystemMatrix();
-    void collectFixedVertices();
     void updateSystemMatrix(int movedVertex);
     //void updateSystemMatrixRecursively(int vertexIndex, Eigen::SparseMatrix<double>& updatedSystemMatrix);
 private:
     Mesh& m_mesh;
-    Visualizer& m_visualizer;
     std::vector<std::vector<int>> m_neighbors;
     std::vector<int> fixedVertices;
     // Eigen::MatrixXd m_weightMatrix; // This will be updated per solve
     Eigen::SparseMatrix<double> m_weightMatrix; // This will be updated per solve
     Eigen::SparseMatrix<double, Eigen::RowMajor> m_systemMatrix;
+public:
+    void setFixedVertices(std::map<int, bool> fixedFaces);
 };
 
 #endif
