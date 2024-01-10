@@ -215,8 +215,7 @@ void Visualizer::handleMouseDown() {
                 if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
                     viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
                     faceId, mouseWorldPos)) {
-                    int vertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), faceId, mouseWorldPos);
-                    movingVertexId = vertexId;
+                    movingVertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), faceId, mouseWorldPos);
                 }
             }
         }
