@@ -31,13 +31,13 @@ Arap::Arap(Mesh& mesh)
 void Arap::setFixedVertices(std::map<int, bool> fixedFaces) {
     // Example: Store the fixed vertices indices for later use
     // This could be stored in a member variable for use in updateSystemMatrix
-    fixedVertices.clear();
+    m_fixedVertices.clear();
 
     for (auto pair : fixedFaces) {
         Eigen::VectorXi vertices = m_mesh.getFaces().row(pair.first);
 
         for (int i = 0; i < vertices.size(); i++) {
-            fixedVertices.push_back(vertices[i]);
+            m_fixedVertices.push_back(vertices[i]);
         }
     }
 }
@@ -49,7 +49,7 @@ void Arap::updateSystemMatrix(int movedVertex) {
     int rowSize = m_systemMatrix.cols();
 
     //all fixed vertices will not be modified
-    for (int vertex : fixedVertices) {
+    for (int vertex : m_fixedVertices) {
         for (Eigen::SparseMatrix<double>::InnerIterator it(updatedSystemMatrix, vertex); it; ++it) {
             updatedSystemMatrix.coeffRef(vertex, it.col()) = 0.0;
         }
@@ -57,6 +57,55 @@ void Arap::updateSystemMatrix(int movedVertex) {
     }
 
     m_systemMatrix = updatedSystemMatrix;
+}
+
+/*
+    The main functions that computes the deformation of the mesh referenced in the class.
+    TODO: Discuss whether we should incorporate constraints inside the function (by giving the constraint indices as a parameter) or incorporate it outside and then call this function.
+    This is just a semantic flavour both will work. I think incorporating constraints inside the function would be better as it will be cleaner in the visualizer end
+ 
+    TODO: Discuss whether we should update the mesh vertices in this function, or we should do it in the caller side.
+*/
+Eigen::MatrixXd Arap::computeDeformation()
+{
+    // First update the weight and system matrices as they changes when mesh gets deformed.
+    m_updateSparseWeightMatrix();
+    m_setSystemMatrix();
+    // I would say also set constraints here
+    
+    // As the Laplacian is symmetric positive definite (actually it is semidefinite we need to be careful here even though in the paper it says it is positive definite), we can use Cholesky factorization
+    // Idk, why but it seems Cholesky factorization does not work with RowMajor Sparse Matrices (maybe I did something wrong)
+    // Converting System Matrix to the Column Major from Row Major
+    Eigen::SparseMatrix<double, Eigen::ColMajor> m_systemMatrixColMajor(m_systemMatrix);
+    Eigen::SimplicialCholesky<Eigen::SparseMatrix<double, Eigen::ColMajor>> chol(m_systemMatrixColMajor); // Factorize the system matrix
+    // Initial guess will be the vertices of the previous frame (which are the current vertices we have)
+    Eigen::MatrixXd deformedVertices = m_mesh.getVertices();
+    
+    double prevRigidityEnergy = std::numeric_limits<double>::max();
+    for(int i = 0; i < MAX_ITERATIONS; ++i)
+    {
+        // Optimize for the rotations
+        std::vector<Eigen::Matrix3d> rotations = m_computeRotations(deformedVertices);
+        
+        // Compuite RHS
+        Eigen::MatrixXd rhs = m_computeRHS(rotations);
+        
+        // Optimize for the vertices
+        deformedVertices = chol.solve(rhs);
+        
+        double rigidityEnergy = m_computeRigidityEnergy(deformedVertices, rotations);
+        std::cout << "Rigidity Energy at the iteration " << i << " is " << rigidityEnergy << "\n";
+        // We can stop prematurely
+        if(abs(rigidityEnergy - prevRigidityEnergy) <= RIGIDITY_ENERGY_THRESHOLD)
+        {
+            break;
+        }
+        
+        prevRigidityEnergy = rigidityEnergy;
+    }
+    
+    return deformedVertices;
+    
 }
 
 void Arap::m_constructNeighborhood()
@@ -172,8 +221,124 @@ void Arap::m_setSystemMatrix()
     m_systemMatrix.resize(m_weightMatrix.rows(), m_weightMatrix.cols());
     m_systemMatrix = -m_weightMatrix;
 
+    // Add diagonal value
     for (int i = 0; i < m_weightMatrix.rows(); ++i)
     {
         m_systemMatrix.coeffRef(i, i) += -m_systemMatrix.row(i).sum();
     }
+}
+
+std::vector<Eigen::Matrix3d> Arap::m_computeRotations(Eigen::MatrixXd& V_deformed)
+{
+    const Eigen::MatrixXd& V = m_mesh.getVertices();
+    std::vector<Eigen::Matrix3d> R(V.rows());
+
+    for (int i = 0; i < V.rows(); ++i)
+    {
+        // Edges of vertices
+        Eigen::MatrixXd P(3, m_neighbors[i].size());
+        // Diagonal matrix with weights
+        Eigen::MatrixXd D(m_neighbors[i].size(), m_neighbors[i].size());
+        // Edges of deformed vertices
+        Eigen::MatrixXd P_p(3, m_neighbors[i].size());
+
+        for (int j = 0; j < m_neighbors[i].size(); ++j)
+        {
+            P.col(j) = V.row(i) - V.row(m_neighbors[i][j]);
+            D(j, j) = m_weightMatrix.coeffRef(i, m_neighbors[i][j]);
+            P_p.col(j) = V_deformed.row(i) - V_deformed.row(m_neighbors[i][j]);
+        }
+        
+        // Covariance matrix: S = P * D * P'^T
+        Eigen::MatrixXd S = P * D * P_p.transpose();
+
+        // Perform SVD: S = U * sum(V^T)
+        Eigen::JacobiSVD<Eigen::MatrixXd> svd(S, Eigen::ComputeThinU | Eigen::ComputeThinV);
+        Eigen::MatrixXd U = svd.matrixU();
+        Eigen::MatrixXd V = svd.matrixV();
+
+        // Ensure determinant is positive
+        if (U.determinant() < 0)
+        {
+            U.col(2) *= -1.0;
+        }
+
+        // R = V * U^T
+        R[i] = V * U.transpose();
+    }
+
+    return R;
+}
+
+
+/*
+    Computes the rigidity energy given the deformed vertices and the rotations. We will use it as an additional stopping condition.
+*/
+double Arap::m_computeRigidityEnergy(const Eigen::MatrixXd& V_deformed, const std::vector<Eigen::Matrix3d>& rotations)
+{
+    double rigidityEnergy = 0.0;
+    const Eigen::MatrixXd& V = m_mesh.getVertices();
+    
+    for(int i = 0; i < V.rows(); ++i)
+    {
+        double energy = 0.0;
+        const std::vector<int>& neighbors = m_neighbors[i];
+        for(int j = 0; j < neighbors.size(); ++j)
+        {
+            int neighborIdx = neighbors[j];
+            Eigen::Vector3d diffDeformed = V_deformed.row(i) - V_deformed.row(neighborIdx);
+            Eigen::Vector3d diffInitial  = V.row(i) - V.row(neighborIdx);
+            energy += m_weightMatrix.coeff(i, neighborIdx) * (diffDeformed - rotations[i] * diffInitial).squaredNorm();
+        }
+        
+        rigidityEnergy += m_weightMatrix.coeff(i, i) * energy;
+    }
+    
+    return rigidityEnergy;
+}
+
+
+Eigen::MatrixXd Arap::m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations)
+{
+    Eigen::MatrixXd V = m_mesh.getVertices();
+    Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(V.rows(), 3);
+    
+    // To get rid of additional calculations for fixed vertices, we are going to skip them. To avoid linear lookups in each iteration we are going to put them in a unordered-set
+    std::unordered_set<int> fixedLookup;
+    for(int i = 0; i < m_fixedVertices.size(); ++i)
+    {
+        int fixedIdx = m_fixedVertices[i];
+        fixedLookup.insert(fixedIdx);
+    }
+    
+    for(int i = 0; i < V.rows(); ++i)
+    {
+        // If fixed just skip redundant calculations
+        if(fixedLookup.find(i) != fixedLookup.end())
+        {
+            continue;
+        }
+        Eigen::Vector3d row = Eigen::Vector3d(0.0, 0.0, 0.0);
+        const std::vector<int>& neighbors = m_neighbors[i];
+        for(int j = 0; j < neighbors.size(); ++j)
+        {
+            int neighborIdx = neighbors[j];
+            row += 0.5 * m_weightMatrix.coeff(i, neighborIdx) * (V.row(i) - V.row(neighborIdx)) * (rotations[i] + rotations[neighborIdx]);
+        }
+        
+        rhs.row(i) = row;
+    }
+    
+    // Fill the fixed entries
+    for(int i = 0; i < m_fixedVertices.size(); ++i)
+    {
+        // Fixed ones preserve their positions
+        int fixedIdx = m_fixedVertices[i];
+        rhs.row(fixedIdx) = V.row(fixedIdx);
+    }
+    
+    // TODO: Set the moving vertex position
+    // rhs.row(movingVertex) = movingVertexPosition;
+    
+    return rhs;
 }
