@@ -30,6 +30,7 @@ public:
 
     // Get current mesh
     Mesh getCurrentMesh();
+    void handleImGUI();
     // Get the mouse Position in screen position
     Eigen::Vector2f getMousePosition();
 

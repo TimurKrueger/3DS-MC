@@ -43,6 +43,58 @@ void Visualizer::launch() {
     viewer.launch();
 }
 
+void Visualizer::handleImGUI() {
+    //menu.callback_draw_viewer_menu = [&]()
+    //{
+    //    // Draw parent menu content
+    //    menu.draw_viewer_menu();
+
+    //    // Add new group
+    //    if (ImGui::CollapsingHeader("New Group", ImGuiTreeNodeFlags_DefaultOpen))
+    //    {
+    //        // Expose variable directly ...
+    //        ImGui::InputFloat("float", &floatVariable, 0, 0, 3);
+
+    //        // ... or using a custom callback
+    //        static bool boolVariable = true;
+    //        if (ImGui::Checkbox("bool", &boolVariable))
+    //        {
+    //            // do something
+    //            std::cout << "boolVariable: " << std::boolalpha << boolVariable << std::endl;
+    //        }
+
+    //        // Expose an enumeration type
+    //        enum Orientation { Up = 0, Down, Left, Right };
+    //        static Orientation dir = Up;
+    //        ImGui::Combo("Direction", (int*)(&dir), "Up\0Down\0Left\0Right\0\0");
+
+    //        // We can also use a std::vector<std::string> defined dynamically
+    //        static int num_choices = 3;
+    //        static std::vector<std::string> choices;
+    //        static int idx_choice = 0;
+    //        if (ImGui::InputInt("Num letters", &num_choices))
+    //        {
+    //            num_choices = std::max(1, std::min(26, num_choices));
+    //        }
+    //        if (num_choices != (int)choices.size())
+    //        {
+    //            choices.resize(num_choices);
+    //            for (int i = 0; i < num_choices; ++i)
+    //                choices[i] = std::string(1, 'A' + i);
+    //            if (idx_choice >= num_choices)
+    //                idx_choice = num_choices - 1;
+    //        }
+    //        ImGui::Combo("Letter", &idx_choice, choices);
+
+    //        // Add a button
+    //        if (ImGui::Button("Print Hello", ImVec2(-1, 0)))
+    //        {
+    //            std::cout << "Hello\n";
+    //        }
+    //    }
+    //};
+}
+
 std::map<int, bool> Visualizer::getFixedFaces() {
     return selectedFaces;
 }
@@ -68,20 +120,25 @@ void Visualizer::handleMouseMove() {
     viewer.callback_mouse_move = [this](igl::opengl::glfw::Viewer& viewer, int button, int modifier) -> bool {
         if (movingVertex) {
             if (movingVertexId >= 0) {
+                std::cout << "first" <<movingVertexId << std::endl;
                 Eigen::Vector2f mousePosition = getMousePosition();
                 Eigen::Vector3f mouseWorldPos;
-                std::cout << "moving the thinf" << std::endl;
+                int vertexId = movingVertexId;
                 if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
                     viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
-                    movingVertexId, mouseWorldPos)) {
-                    int vertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), movingVertexId, mouseWorldPos);
+                    vertexId, mouseWorldPos)) {
+                    std::cout << "second" << movingVertexId << std::endl;
 
+                    //int vertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), movingVertexId, mouseWorldPos);
+
+                    std::cout << "vertexId " << movingVertexId << std::endl;
+                    std::cout << currentMesh.getVertices().row(movingVertexId) << std::endl;
                     //-------------
                     // edit this, used from old solution!!!
                     Eigen::Vector3f vertexPosition = {
-                        (float)currentMesh.getVertices().row(vertexId).x(), (float)currentMesh.getVertices().row(vertexId).y(), (float)currentMesh.getVertices().row(vertexId).z()
+                        (float)currentMesh.getVertices().row(movingVertexId).x(), (float)currentMesh.getVertices().row(movingVertexId).y(), (float)currentMesh.getVertices().row(movingVertexId).z()
                     };
-
+                    std::cout << movingVertexId << std::endl;
                     Eigen::Vector3f projection = igl::project(vertexPosition, viewer.core().view, viewer.core().proj, viewer.core().viewport);
                     Eigen::Vector3f worldPosition = igl::unproject(Eigen::Vector3f(mousePosition.x(), mousePosition.y(), projection.z()),
                         viewer.core().view, viewer.core().proj, viewer.core().viewport);
@@ -89,8 +146,14 @@ void Visualizer::handleMouseMove() {
                     //-------------
 
 
-                    currentMesh.setVertexPos(vertexId, worldPosition.cast<double>());
+
+
+                    currentMesh.setVertexPos(movingVertexId, worldPosition.cast<double>());
+                    Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId);
+                    currentMesh.setVertices(matrix);
                     updateMesh(currentMesh);
+                    std::cout << currentMesh.getVertices().row(movingVertexId) << std::endl << movingVertexId << std::endl << "###############" << std::endl;
+                    return true;
                 }
             }
         }
@@ -146,14 +209,14 @@ void Visualizer::handleMouseDown() {
         }
         else if (movingVertex) {
            if (movingVertexId == -1) {
-                Eigen::Vector2f mousePosition = getMousePosition();
                 int faceId;
                 Eigen::Vector3f mouseWorldPos;
                 std::cout << "moving Vertex" << std::endl;
                 if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
                     viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
                     faceId, mouseWorldPos)) {
-                    movingVertexId = faceId;
+                    int vertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), faceId, mouseWorldPos);
+                    movingVertexId = vertexId;
                 }
             }
         }
@@ -188,6 +251,7 @@ void Visualizer::handleKeyDown() {
             case 'R':
                 std::cout << "r" << std::endl;
                 selectedFaces.clear();
+                m_arap.setFixedVertices(selectedFaces);
                 selectionFixedFaces = false;
                 viewer.data().set_colors(currentMesh.getInitColors());
                 return true;

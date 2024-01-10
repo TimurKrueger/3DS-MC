@@ -32,6 +32,10 @@ void Mesh::setVertexPos(int vertexIndex, const Eigen::Vector3d& newPos) {
     }
 }
 
+void Mesh::setVertices(Eigen::MatrixXd matrix) {
+    vertices = matrix;
+}
+
 int Mesh::getClosestVertexId(const Eigen::MatrixXi& faces, int faceId, const Eigen::Vector3f& barycentricPosition) {
     int closestVertex = -1;
     float maxBarycentric = -1.0f;

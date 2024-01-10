@@ -66,13 +66,13 @@ void Arap::updateSystemMatrix(int movedVertex) {
  
     TODO: Discuss whether we should update the mesh vertices in this function, or we should do it in the caller side.
 */
-Eigen::MatrixXd Arap::computeDeformation()
+Eigen::MatrixXd Arap::computeDeformation(int movedVertexId)
 {
     // First update the weight and system matrices as they changes when mesh gets deformed.
     m_updateSparseWeightMatrix();
     m_setSystemMatrix();
     // I would say also set constraints here
-    
+    updateSystemMatrix(movedVertexId);
     // As the Laplacian is symmetric positive definite (actually it is semidefinite we need to be careful here even though in the paper it says it is positive definite), we can use Cholesky factorization
     // Idk, why but it seems Cholesky factorization does not work with RowMajor Sparse Matrices (maybe I did something wrong)
     // Converting System Matrix to the Column Major from Row Major
@@ -88,7 +88,7 @@ Eigen::MatrixXd Arap::computeDeformation()
         std::vector<Eigen::Matrix3d> rotations = m_computeRotations(deformedVertices);
         
         // Compuite RHS
-        Eigen::MatrixXd rhs = m_computeRHS(rotations);
+        Eigen::MatrixXd rhs = m_computeRHS(rotations, movedVertexId);
         
         // Optimize for the vertices
         deformedVertices = chol.solve(rhs);
@@ -298,7 +298,7 @@ double Arap::m_computeRigidityEnergy(const Eigen::MatrixXd& V_deformed, const st
 }
 
 
-Eigen::MatrixXd Arap::m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations)
+Eigen::MatrixXd Arap::m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations, int movedVertexId)
 {
     Eigen::MatrixXd V = m_mesh.getVertices();
     Eigen::MatrixXd rhs = Eigen::MatrixXd::Zero(V.rows(), 3);
@@ -338,7 +338,7 @@ Eigen::MatrixXd Arap::m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations
     }
     
     // TODO: Set the moving vertex position
-    // rhs.row(movingVertex) = movingVertexPosition;
+    rhs.row(movedVertexId) = V.row(movedVertexId);
     
     return rhs;
 }

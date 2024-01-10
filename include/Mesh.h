@@ -24,6 +24,7 @@ public:
     // Apply force to a vertex
     void applyForce(int vertexIndex, const Eigen::Vector3d& force);
     void setVertexPos(int vertexIndex, const Eigen::Vector3d& newPos);
+    void setVertices(Eigen::MatrixXd matrix);
 
     int getClosestVertexId(const Eigen::MatrixXi& faces, int faceId, const Eigen::Vector3f& barycentricPosition);
 

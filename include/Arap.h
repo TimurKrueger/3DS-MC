@@ -29,7 +29,7 @@ class Arap
 {
 public:
     explicit Arap(Mesh& mesh);
-    Eigen::MatrixXd computeDeformation();
+    Eigen::MatrixXd computeDeformation(int movedVertexId);
 private:
     void m_constructNeighborhood();
     // void m_updateWeightMatrix();
@@ -39,7 +39,7 @@ private:
     //void updateSystemMatrixRecursively(int vertexIndex, Eigen::SparseMatrix<double>& updatedSystemMatrix);
     std::vector<Eigen::Matrix3d> m_computeRotations(Eigen::MatrixXd&);
     double m_computeRigidityEnergy(const Eigen::MatrixXd& V_deformed, const std::vector<Eigen::Matrix3d>& rotations);
-    Eigen::MatrixXd m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations); // TODO: Complete after the constraint stuff has been finished
+    Eigen::MatrixXd m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations, int movedVertexId); // TODO: Complete after the constraint stuff has been finished
 private:
     // Mesh is always referenced from ARAP class. Therefore, the referenced data of the mesh will always stay updated. This is important for some calculations that uses the previous mesh vertices as a reference.
     Mesh& m_mesh;
