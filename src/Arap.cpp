@@ -15,8 +15,6 @@ Arap::Arap(Mesh& mesh)
     // m_updateWeightMatrix();
     m_updateSparseWeightMatrix();
     m_setSystemMatrix();
-    
-    std::cout << m_weightMatrix.coeff(0, 0) << "\n";
 
     // for debugging
     /*
@@ -42,8 +40,9 @@ void Arap::setFixedVertices(std::map<int, bool> fixedFaces) {
     }
 }
 
-void Arap::updateSystemMatrix(int movedVertex) {
-
+void Arap::updateSystemMatrix(int movedVertex)
+{
+    /*
     //copy matrix
     Eigen::SparseMatrix<double> updatedSystemMatrix = m_systemMatrix;
     int rowSize = m_systemMatrix.cols();
@@ -57,6 +56,16 @@ void Arap::updateSystemMatrix(int movedVertex) {
     }
 
     m_systemMatrix = updatedSystemMatrix;
+    */
+    
+    for (int vertex : m_fixedVertices) 
+    {
+        m_systemMatrix.row(vertex) *= 0.0;
+        m_systemMatrix.coeffRef(vertex, vertex) = 1.0;
+    }
+    
+    m_systemMatrix.row(movedVertex) *= 0.0;
+    m_systemMatrix.coeffRef(movedVertex, movedVertex) = 1.0;
 }
 
 /*
@@ -224,7 +233,7 @@ void Arap::m_setSystemMatrix()
     // Add diagonal value
     for (int i = 0; i < m_weightMatrix.rows(); ++i)
     {
-        m_systemMatrix.coeffRef(i, i) += -m_systemMatrix.row(i).sum();
+        m_systemMatrix.coeffRef(i, i) = (m_weightMatrix.row(i).sum() - 1.0);
     }
 }
 
@@ -253,18 +262,15 @@ std::vector<Eigen::Matrix3d> Arap::m_computeRotations(Eigen::MatrixXd& V_deforme
         Eigen::MatrixXd S = P * D * P_p.transpose();
 
         // Perform SVD: S = U * sum(V^T)
-        Eigen::JacobiSVD<Eigen::MatrixXd> svd(S, Eigen::ComputeThinU | Eigen::ComputeThinV);
-        Eigen::MatrixXd U = svd.matrixU();
-        Eigen::MatrixXd V = svd.matrixV();
-
-        // Ensure determinant is positive
-        if (U.determinant() < 0)
-        {
-            U.col(2) *= -1.0;
-        }
+        Eigen::JacobiSVD<Eigen::MatrixXd> svd(S, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        const Eigen::MatrixXd& U = svd.matrixU();
+        const Eigen::MatrixXd& V = svd.matrixV();
+        
+        Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
+        I(2, 2) = (V * U.transpose()).determinant();
 
         // R = V * U^T
-        R[i] = V * U.transpose();
+        R[i] = V * I * U.transpose();
     }
 
     return R;
@@ -337,7 +343,6 @@ Eigen::MatrixXd Arap::m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations
         rhs.row(fixedIdx) = V.row(fixedIdx);
     }
     
-    // TODO: Set the moving vertex position
     rhs.row(movedVertexId) = V.row(movedVertexId);
     
     return rhs;

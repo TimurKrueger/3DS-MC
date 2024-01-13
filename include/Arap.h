@@ -40,7 +40,7 @@ private:
     std::vector<Eigen::Matrix3d> m_computeRotations(Eigen::MatrixXd&);
     double m_computeRigidityEnergy(const Eigen::MatrixXd& V_deformed, const std::vector<Eigen::Matrix3d>& rotations);
     Eigen::MatrixXd m_computeRHS(const std::vector<Eigen::Matrix3d>& rotations, int movedVertexId); // TODO: Complete after the constraint stuff has been finished
-private:
+public:
     // Mesh is always referenced from ARAP class. Therefore, the referenced data of the mesh will always stay updated. This is important for some calculations that uses the previous mesh vertices as a reference.
     Mesh& m_mesh;
     // Topology is constant, so it can be safely computed once and stored.

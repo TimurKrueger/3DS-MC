@@ -203,6 +203,8 @@ void Visualizer::handleMouseDown() {
                 int vertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), faceId, barycentricPosition);
                 currentMesh.applyForce(vertexId, force);
 
+                Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId);
+                currentMesh.setVertices(matrix);
                 updateMesh(currentMesh);
                 return true;
             }

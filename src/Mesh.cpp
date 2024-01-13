@@ -5,12 +5,14 @@
  */
 
 #include <igl/readPLY.h>
+#include <igl/readOFF.h>
 #include "../include/Mesh.h"
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 
 Mesh::Mesh(const std::string& modelName) {
-    igl::readPLY(modelName, vertices, faces);
+    //igl::readPLY(modelName, vertices, faces);
+    igl::readOFF(modelName, vertices, faces);
     colors = Eigen::MatrixXd::Constant(faces.rows(), 3, 1);
     initColors = Eigen::MatrixXd::Constant(faces.rows(), 3, 1);
 }
