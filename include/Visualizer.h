@@ -11,11 +11,15 @@
 #include <igl/unproject_onto_mesh.h>
 #include "Mesh.h"
 #include "Arap.h"
+#include <igl/opengl/glfw/imgui/ImGuiPlugin.h>
+#include <igl/opengl/glfw/imgui/ImGuiMenu.h>
+#include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
 #include <map>
 
 class Visualizer {
 private:
     igl::opengl::glfw::Viewer viewer;
+    igl::opengl::glfw::imgui::ImGuiMenu menu;
     Mesh currentMesh;
     Arap m_arap;
     std::map<int, bool> selectedFaces;
@@ -38,6 +42,7 @@ public:
     // Set the mesh for visualization
     void setMesh(const Mesh& mesh);
     void setArap(const Arap& arap);
+    igl::opengl::glfw::Viewer getViewer();
     // Update the mesh visualization
     void updateMesh(const Mesh& mesh);
     // Set the keyboard callback
