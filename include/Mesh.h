@@ -21,11 +21,11 @@ public:
 
     // Load mesh from a file
     void load(const std::string& filename);
+
     // Apply force to a vertex
     void applyForce(int vertexIndex, const Eigen::Vector3d& force);
     void setVertexPos(int vertexIndex, const Eigen::Vector3d& newPos);
     void setVertices(Eigen::MatrixXd matrix);
-
     int getClosestVertexId(const Eigen::MatrixXi& faces, int faceId, const Eigen::Vector3f& barycentricPosition);
 
     // Getter for vertices, faces and colors
@@ -33,7 +33,11 @@ public:
     const Eigen::MatrixXd& getColors() const;
     const Eigen::MatrixXi& getFaces() const;
     const Eigen::MatrixXd& getInitColors() const;
+
     // Getter for statistics
     int getNumVertices() const;
+
+    // Checks object file format
+    bool hasExtension(const std::string& fileName, const std::string& ext);
 };
 #endif

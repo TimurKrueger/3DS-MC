@@ -4,17 +4,26 @@
  * Authors: Kilian Peis, �mer K�se, Natalie Adam, Timur Kr�ger
  */
 
+#include "../include/Mesh.h"
 #include <igl/readPLY.h>
 #include <igl/readOFF.h>
-#include "../include/Mesh.h"
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 
 Mesh::Mesh(const std::string& modelName) {
-    //igl::readPLY(modelName, vertices, faces);
-    igl::readOFF(modelName, vertices, faces);
-    colors = Eigen::MatrixXd::Constant(faces.rows(), 3, 1);
-    initColors = Eigen::MatrixXd::Constant(faces.rows(), 3, 1);
+    if (hasExtension(modelName, "ply")) {
+        igl::readPLY(modelName, vertices, faces);
+        colors = Eigen::MatrixXd::Constant(faces.rows(), 3, 1);
+        initColors = Eigen::MatrixXd::Constant(faces.rows(), 3, 1);
+    }
+    else if (hasExtension(modelName, "off")) {
+        igl::readOFF(modelName, vertices, faces);
+        colors = Eigen::MatrixXd::Constant(faces.rows(), 3, 1);
+        initColors = Eigen::MatrixXd::Constant(faces.rows(), 3, 1);
+    }
+    else {
+        std::cout << "Unknown or unsupported file format." << std::endl;
+    }
 }
 
 void Mesh::load(const std::string& filename) {
@@ -22,7 +31,6 @@ void Mesh::load(const std::string& filename) {
 }
 
 void Mesh::applyForce(int vertexIndex, const Eigen::Vector3d& force) {
-
     if (vertexIndex >= 0 && vertexIndex < vertices.rows()) {
         vertices.row(vertexIndex) += force.transpose();
     }
@@ -66,7 +74,21 @@ const Eigen::MatrixXd& Mesh::getInitColors() const {
     return initColors;
 }
 
-int Mesh::getNumVertices() const
-{
+int Mesh::getNumVertices() const {
     return vertices.rows();
+}
+
+// Checks if loaded mesh is .ply or .off format
+bool Mesh::hasExtension(const std::string& fileName, const std::string& ext) {
+    size_t dotPos = fileName.find_last_of('.');
+
+    if (dotPos == std::string::npos || dotPos == fileName.length() - 1) {
+        return false;
+    }
+
+    std::string fileExt = fileName.substr(dotPos + 1);
+    std::transform(fileExt.begin(), fileExt.end(), fileExt.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    return fileExt == ext;
 }
