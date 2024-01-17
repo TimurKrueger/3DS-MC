@@ -17,15 +17,12 @@ int main() {
 	Visualizer visualizer("../Data/Cactus/cactus_small.off");
 	Mesh currentMesh = visualizer.getCurrentMesh();
     
+	Arap arap(currentMesh);
+	Eigen::SparseMatrix<double> L_ours = arap.m_systemMatrix.sparseView();
     Eigen::SparseMatrix<double> L;
     igl::cotmatrix(currentMesh.getVertices(), currentMesh.getFaces(), L);
-    
+	
+	std::cout << (L + L_ours).norm() << std::endl;
 	// Launch the visualizer
-	Arap arap(currentMesh);
-    Eigen::SparseMatrix<double, Eigen::RowMajor> ourLaplacian = arap.m_systemMatrix;
-    Eigen::SparseMatrix<double, Eigen::ColMajor> ourLaplacianCol(ourLaplacian);
-    
-    Eigen::SparseMatrix<double> diff = L + ourLaplacianCol;
-    std::cout << diff.norm() << "\n";
 	visualizer.launch();
 };

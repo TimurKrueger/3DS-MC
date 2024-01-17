@@ -148,8 +148,7 @@ void Visualizer::handleMouseMove() {
 
 
 
-                    currentMesh.setVertexPos(movingVertexId, worldPosition.cast<double>());
-                    Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId);
+                    Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId, worldPosition.cast<double>());
                     currentMesh.setVertices(matrix);
                     updateMesh(currentMesh);
                     std::cout << currentMesh.getVertices().row(movingVertexId) << std::endl << movingVertexId << std::endl << "###############" << std::endl;
@@ -203,8 +202,8 @@ void Visualizer::handleMouseDown() {
                 int vertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), faceId, barycentricPosition);
                 currentMesh.applyForce(vertexId, force);
 
-                Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId);
-                currentMesh.setVertices(matrix);
+                //Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId);
+                //currentMesh.setVertices(matrix);
                 updateMesh(currentMesh);
                 return true;
             }
