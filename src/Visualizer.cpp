@@ -8,7 +8,7 @@
 #include <igl/opengl/glfw/imgui/ImGuiPlugin.h>
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 #include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
-#include <igl/opengl/glfw/imgui/ImGuiFileDialog.h>
+#include <../../../lib/ImGuiFileDialog/ImGuiFileDialog.h>
 
 Visualizer::Visualizer(const std::string& meshPath)
 	:

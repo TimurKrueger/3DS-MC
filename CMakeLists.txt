@@ -4,7 +4,7 @@
 # Authors: Kilian Peis, Ömer Köse, Natalie Adam, Timur Krüger
 # ===============================================================================
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 project(interactive_arap)
 
@@ -16,8 +16,9 @@ set(LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs CACHE PATH "Path to the library
 
 # Dependency: libigl
 list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libigl)
-option(LIBIGL_WITH_OPENGL "Use OpenGL" ON)
-option(LIBIGL_WITH_OPENGL_GLFW "Use GLFW" ON)
+option(LIBIGL_OPENGL "Use OpenGL" ON)
+option(LIBIGL_GLFW "Use GLFW" ON)
+option(LIBIGL_IMGUI "Use IMGUI" ON)
 include(libigl)
 
 # Set header and source files
@@ -25,8 +26,8 @@ file(GLOB HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h) # Set header fil
 file(GLOB SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp) # Set source files
 
 # Add executable and link it to the libraries
-add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(${PROJECT_NAME} PUBLIC igl::core igl::opengl_glfw)
+add_executable(${PROJECT_NAME} lib/ImGuiFileDialog/ImGuiFileDialog.cpp main.cpp ${SOURCE_FILES} ${HEADER_FILES})
+target_link_libraries(${PROJECT_NAME} PUBLIC igl::core igl::glfw igl::imgui)
 
 # Copy resources (models & shaders)
 #add_custom_command(TARGET ${PROJECT_NAME}
