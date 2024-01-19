@@ -52,40 +52,48 @@ void Visualizer::launch() {
 	handleMouseMove();
 	handleImGUI();
 }
-
 void Visualizer::handleImGUI() {
 	igl::opengl::glfw::imgui::ImGuiPlugin plugin;
 	viewer.plugins.push_back(&plugin);
 	igl::opengl::glfw::imgui::ImGuiMenu menu;
 	plugin.widgets.push_back(&menu);
-
+	
 	menu.callback_draw_viewer_menu = [&]()
 	{
-		if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			if (ImGui::Button("Load Mesh", ImVec2(-1, 0)))
-			{
-				IGFD::FileDialogConfig config;
-				config.path = ".";
-				ImGuiFileDialog::Instance()->OpenDialog("ChooseMeshFile", "Choose Mesh File", ".obj,.off,.stl,.ply", config);
-			}
-		}
+		ImVec2 menuWindowSize = ImVec2(120, 100);
+		ImGui::SetNextWindowSize(menuWindowSize, ImGuiCond_FirstUseEver);
 
-		// Check if file selection is done
-		if (ImGuiFileDialog::Instance()->Display("ChooseMeshFile"))
+		if (ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_NoResize)) // Optional: Use ImGuiWindowFlags_NoResize to disable manual resizing
 		{
-			// If file is selected
-			if (ImGuiFileDialog::Instance()->IsOk())
+			if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-				std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-				std::cout << filePathName << std::endl;
-				Mesh newMesh(filePathName);
-				setMesh(newMesh);
+				if (ImGui::Button("Load Mesh", ImVec2(-1, 0)))
+				{
+					IGFD::FileDialogConfig config;
+					config.path = "../Data";
+					ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose Mesh File", ".off,.ply", config);
+				}
 			}
 
-			// Close the dialog
-			ImGuiFileDialog::Instance()->Close();
+			ImVec2 menuWindowSize = ImVec2(600, 450);
+			ImGui::SetNextWindowSize(menuWindowSize, ImGuiCond_FirstUseEver);
+
+			if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+			{
+			
+				if (ImGuiFileDialog::Instance()->IsOk())
+				{
+					std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+					std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+					std::cout << filePathName << std::endl;
+					Mesh newMesh(filePathName);
+					setMesh(newMesh);
+				}			
+
+				ImGuiFileDialog::Instance()->Close();
+			}
+
+			ImGui::End();
 		}
 	};
 
