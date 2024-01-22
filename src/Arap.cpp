@@ -146,14 +146,14 @@ void Arap::m_updateWeightMatrix()
         double c2 = (e20.dot(-e12)) / ((e20.cross(-e12)).norm());
      
         // Symmetrically load the weight matrix
-        m_weightMatrix(F(i, 0), F(i, 1)) += 0.5 * c2;
-        m_weightMatrix(F(i, 1), F(i, 0)) += 0.5 * c2;
-     
-        m_weightMatrix(F(i, 1), F(i, 2)) += 0.5 * c0;
-        m_weightMatrix(F(i, 2), F(i, 1)) += 0.5 * c0;
-     
-        m_weightMatrix(F(i, 0), F(i, 2)) += 0.5 * c1;
-        m_weightMatrix(F(i, 2), F(i, 0)) += 0.5 * c1;
+        m_weightMatrix(F(i, 0), F(i, 1)) += 0.5 * (c0 + c1);
+        m_weightMatrix(F(i, 1), F(i, 0)) += 0.5 * (c0 + c1);
+
+        m_weightMatrix(F(i, 1), F(i, 2)) += 0.5 * (c1 + c2);
+        m_weightMatrix(F(i, 2), F(i, 1)) += 0.5 * (c1 + c2);
+
+        m_weightMatrix(F(i, 0), F(i, 2)) += 0.5 * (c0 + c2);
+        m_weightMatrix(F(i, 2), F(i, 0)) += 0.5 * (c0 + c2);
     }
 
     // Set the diagonal weights to 1
@@ -213,8 +213,9 @@ std::vector<Eigen::Matrix3d> Arap::m_computeRotations(Eigen::MatrixXd& V_deforme
         Eigen::JacobiSVD<Eigen::MatrixXd> svd(S, Eigen::ComputeFullU | Eigen::ComputeFullV);
         const Eigen::MatrixXd& U = svd.matrixU();
         const Eigen::MatrixXd& V = svd.matrixV();
-        
+
         Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
+        //I(2, 2) = (U * V.transpose()).determinant();
         I(2, 2) = (V * U.transpose()).determinant();
 
         // R = V * U^T

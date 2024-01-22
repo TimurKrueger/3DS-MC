@@ -14,7 +14,7 @@
 
 int main() {
 	// Create an instance Visualizer class
-	Visualizer visualizer("../Data/Cactus/cactus_small.off");
+	Visualizer visualizer("../Data/armadillo/armadillo_500.off");
 	Mesh currentMesh = visualizer.getCurrentMesh();
     
 	Arap arap(currentMesh);

@@ -21,7 +21,7 @@
 
 
 // TODO: Discuss about these constants
-#define RIGIDITY_ENERGY_THRESHOLD 1e-3 // Not sure what this should be we should analyze the rigidity energy
+#define RIGIDITY_ENERGY_THRESHOLD 1e-6 // Not sure what this should be we should analyze the rigidity energy
 #define MAX_ITERATIONS 10
 
 
