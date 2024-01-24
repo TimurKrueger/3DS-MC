@@ -14,11 +14,11 @@
 
 int main() {
 	// Create an instance Visualizer class
-	Visualizer visualizer("../Data/armadillo/armadillo_500.off");
+	Visualizer visualizer("../Data/Armadillo/armadillo_500.off");
 	Mesh currentMesh = visualizer.getCurrentMesh();
     
 	Arap arap(currentMesh);
-	Eigen::SparseMatrix<double> L_ours = arap.m_systemMatrix.sparseView();
+	Eigen::SparseMatrix<double> L_ours = arap.m_systemMatrix;
     Eigen::SparseMatrix<double> L;
     igl::cotmatrix(currentMesh.getVertices(), currentMesh.getFaces(), L);
 	

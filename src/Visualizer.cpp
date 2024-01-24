@@ -120,23 +120,23 @@ void Visualizer::handleMouseMove() {
     viewer.callback_mouse_move = [this](igl::opengl::glfw::Viewer& viewer, int button, int modifier) -> bool {
         if (movingVertex) {
             if (movingVertexId >= 0) {
-                std::cout << "first" <<movingVertexId << std::endl;
+                //std::cout << "first" <<movingVertexId << std::endl;
                 Eigen::Vector2f mousePosition = getMousePosition();
                 Eigen::Vector3f mouseWorldPos;
                 int vertexId = movingVertexId;
                 
-                std::cout << "second" << movingVertexId << std::endl;
+                //std::cout << "second" << movingVertexId << std::endl;
 
                 //int vertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), movingVertexId, mouseWorldPos);
 
-                std::cout << "vertexId " << movingVertexId << std::endl;
-                std::cout << currentMesh.getVertices().row(movingVertexId) << std::endl;
+                //std::cout << "vertexId " << movingVertexId << std::endl;
+                //std::cout << currentMesh.getVertices().row(movingVertexId) << std::endl;
                 //-------------
                 // edit this, used from old solution!!!
                 Eigen::Vector3f vertexPosition = {
                     (float)currentMesh.getVertices().row(movingVertexId).x(), (float)currentMesh.getVertices().row(movingVertexId).y(), (float)currentMesh.getVertices().row(movingVertexId).z()
                 };
-                std::cout << movingVertexId << std::endl;
+                //std::cout << movingVertexId << std::endl;
                 Eigen::Vector3f projection = igl::project(vertexPosition, viewer.core().view, viewer.core().proj, viewer.core().viewport);
                 Eigen::Vector3f worldPosition = igl::unproject(Eigen::Vector3f(mousePosition.x(), mousePosition.y(), projection.z()),
                     viewer.core().view, viewer.core().proj, viewer.core().viewport);
@@ -146,7 +146,7 @@ void Visualizer::handleMouseMove() {
                 Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId, worldPosition.cast<double>());
                 currentMesh.setVertices(matrix);
                 updateMesh(currentMesh);
-                std::cout << currentMesh.getVertices().row(movingVertexId) << std::endl << movingVertexId << std::endl << "###############" << std::endl;
+                //std::cout << currentMesh.getVertices().row(movingVertexId) << std::endl << movingVertexId << std::endl << "###############" << std::endl;
                 return true;
                 
             }
