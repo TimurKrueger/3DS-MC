@@ -167,18 +167,6 @@ void Visualizer::handleMouseMove() {
 					Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
 					Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
 					faceColorBlock = selectedColor.transpose();
-
-					/*if (selected) {
-						const Eigen::Vector3d selectedColor(255, 0, 0);
-						Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
-						Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
-						faceColorBlock = selectedColor.transpose();
-					}
-					else {
-						Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
-						Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
-						faceColorBlock = currentMesh.getInitColors().row(faceId).transpose();
-					}*/
 					viewer.data().set_colors(currentMesh.getColors());
 				}
 				return true;
@@ -194,7 +182,7 @@ void Visualizer::handleMouseDown() {
 		Eigen::Vector2f mousePosition = getMousePosition();
 		mouseClicked = true;
 		if (selectionFixedFaces) {
-			/*int faceId;
+			int faceId;
 			Eigen::Vector3f barycentricPosition;
 
 			if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
@@ -216,7 +204,7 @@ void Visualizer::handleMouseDown() {
 					faceColorBlock = currentMesh.getInitColors().row(faceId).transpose();
 				}
 				viewer.data().set_colors(currentMesh.getColors());
-			}*/
+			}
 		}
 		else if (fixedMovement) {
 			int faceId;
@@ -254,6 +242,10 @@ void Visualizer::handleKeyDown() {
 	viewer.callback_key_down = [this](igl::opengl::glfw::Viewer&, unsigned char key, int modifier) {
 		Eigen::Vector3d force(0, -20, 0); 
 		int target_vertex_index = 300;
+		int r = 0;
+		int b = 0;
+		int g = 0;
+		Eigen::Vector3d selectedColor(r, b, g);
 
 		switch (key) {
 		case ' ':
@@ -261,7 +253,7 @@ void Visualizer::handleKeyDown() {
 			updateMesh(currentMesh);
 			return true;
 		case '1':
-			selectionFixedFaces = true;
+			selectionFixedFaces = !selectionFixedFaces;
 			fixedMovement = false;
 			movingVertex = false;
 			return true;
@@ -269,20 +261,35 @@ void Visualizer::handleKeyDown() {
 			//fixedMovement = true;
 			return true;
 		case '3':
-			movingVertex = true;
+			movingVertex = !movingVertex;
 			selectionFixedFaces = false;
 			fixedMovement = false;
+			if (!movingVertex) {
+				r = 255;
+				b = 0;
+				g = 0;
+			}
+			else {
+				r = 0;
+				b = 0;
+				g = 255;
+			}
+			/*selectedColor(r, b, g);
+			for (int i = 0; i < selectedFaces.size(); i++) {
+				int f_id = selectedFaces.at(i);
+				Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
+				Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(f_id);
+				faceColorBlock = selectedColor.transpose();
+			}*/
 			return true;
 		case 'R':
-			// Mark: Might need fix
 			selectedFaces.clear();
-			std::cout << "size of selectedFaces after clear(): " << selectedFaces.size() << std::endl;
 			m_arap.setFixedVertices(selectedFaces);
-			std::cout << "size of m_arap.selectedFaces after clear(): " << m_arap.m_fixedVertices.size() << std::endl;
 			selectionFixedFaces = false;
 			movingVertex = false;
 			fixedMovement = false;
-			viewer.data().set_colors(currentMesh.getInitColors());
+			currentMesh.setInitColors();
+			viewer.data().set_colors(currentMesh.getColors());
 			return true;
 		}
 		return false;

@@ -33,6 +33,7 @@ public:
     const Eigen::MatrixXd& getColors() const;
     const Eigen::MatrixXi& getFaces() const;
     const Eigen::MatrixXd& getInitColors() const;
+    void setInitColors();
 
     // Getter for statistics
     int getNumVertices() const;
