@@ -28,6 +28,7 @@ private:
     bool fixedMovement;
     bool movingVertex;
     int movingVertexId;
+    bool mouseClicked;
     
 public:
     explicit Visualizer(const std::string& meshPath);

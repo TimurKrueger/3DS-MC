@@ -17,7 +17,8 @@ Visualizer::Visualizer(const std::string& meshPath)
 	selectionFixedFaces(false),
 	fixedMovement(false),
 	movingVertex(false),
-	movingVertexId(-1)
+	movingVertexId(-1),
+	mouseClicked(false)
 {
 	viewer.data().set_mesh(currentMesh.getVertices(), currentMesh.getFaces());
 	viewer.data().set_colors(currentMesh.getColors());
@@ -149,6 +150,41 @@ void Visualizer::handleMouseMove() {
 				}
 			}
 		}
+		else if (selectionFixedFaces) {
+			if (mouseClicked) {
+				Eigen::Vector2f mousePosition = getMousePosition();
+				int faceId;
+				Eigen::Vector3f barycentricPosition;
+				std::cout << "size of selectedFaces in moving: " << selectedFaces.size() << std::endl;
+				std::cout << "size of m_arap.selectedFaces in moving: " << m_arap.m_fixedVertices.size() << std::endl;
+
+				if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
+					viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
+					faceId, barycentricPosition)) {
+					bool selected = !selectedFaces[faceId];
+					selectedFaces[faceId] = selected;
+					const Eigen::Vector3d selectedColor(255, 0, 0);
+					Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
+					Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
+					faceColorBlock = selectedColor.transpose();
+
+					/*if (selected) {
+						const Eigen::Vector3d selectedColor(255, 0, 0);
+						Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
+						Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
+						faceColorBlock = selectedColor.transpose();
+					}
+					else {
+						Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
+						Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
+						faceColorBlock = currentMesh.getInitColors().row(faceId).transpose();
+					}*/
+					viewer.data().set_colors(currentMesh.getColors());
+				}
+				return true;
+			}
+		}
+
 		return false;
 	};
 }
@@ -156,9 +192,9 @@ void Visualizer::handleMouseMove() {
 void Visualizer::handleMouseDown() {
 	viewer.callback_mouse_down = [this](igl::opengl::glfw::Viewer& viewer, int button, int modifier) -> bool {
 		Eigen::Vector2f mousePosition = getMousePosition();
-
+		mouseClicked = true;
 		if (selectionFixedFaces) {
-			int faceId;
+			/*int faceId;
 			Eigen::Vector3f barycentricPosition;
 
 			if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
@@ -180,7 +216,7 @@ void Visualizer::handleMouseDown() {
 					faceColorBlock = currentMesh.getInitColors().row(faceId).transpose();
 				}
 				viewer.data().set_colors(currentMesh.getColors());
-			}
+			}*/
 		}
 		else if (fixedMovement) {
 			int faceId;
@@ -226,18 +262,26 @@ void Visualizer::handleKeyDown() {
 			return true;
 		case '1':
 			selectionFixedFaces = true;
+			fixedMovement = false;
+			movingVertex = false;
 			return true;
 		case '2':
-			fixedMovement = true;
+			//fixedMovement = true;
 			return true;
 		case '3':
 			movingVertex = true;
+			selectionFixedFaces = false;
+			fixedMovement = false;
 			return true;
 		case 'R':
 			// Mark: Might need fix
 			selectedFaces.clear();
+			std::cout << "size of selectedFaces after clear(): " << selectedFaces.size() << std::endl;
 			m_arap.setFixedVertices(selectedFaces);
+			std::cout << "size of m_arap.selectedFaces after clear(): " << m_arap.m_fixedVertices.size() << std::endl;
 			selectionFixedFaces = false;
+			movingVertex = false;
+			fixedMovement = false;
 			viewer.data().set_colors(currentMesh.getInitColors());
 			return true;
 		}
@@ -246,21 +290,9 @@ void Visualizer::handleKeyDown() {
 }
 
 void Visualizer::handleKeyRelease() {
-	viewer.callback_key_up = [this](igl::opengl::glfw::Viewer&, unsigned char key, int modifier) {
+	viewer.callback_mouse_up = [this](igl::opengl::glfw::Viewer& viewer, int button, int modifier) -> bool {
+		mouseClicked = false;
 
-		switch (key) {
-		case '1':
-			selectionFixedFaces = false;
-			m_arap.setFixedVertices(getFixedFaces());
-			return true;
-		case '2':
-			fixedMovement = false;
-			return true;
-		case '3':
-			movingVertex = false;
-			movingVertexId = -1;
-			return true;
-		}
 		return false;
 	};
 }
