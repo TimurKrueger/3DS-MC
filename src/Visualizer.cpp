@@ -120,57 +120,68 @@ Eigen::Vector2f Visualizer::getMousePosition()
 	return Eigen::Vector2f(viewer_mouse_x, viewer_mouse_y);
 }
 
+double Visualizer::getCurrentTimeInSeconds() {
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(currentTime - prevTime);
+	return duration.count();
+}
+
 void Visualizer::handleMouseMove() {
+	
 	viewer.callback_mouse_move = [this](igl::opengl::glfw::Viewer& viewer, int button, int modifier) -> bool {
-		if (movingVertex) {
-			if (movingVertexId >= 0) {
-				Eigen::Vector2f mousePosition = getMousePosition();
-				Eigen::Vector3f mouseWorldPos;
-				int vertexId = movingVertexId;
+		double deltaTime = getCurrentTimeInSeconds();
+		if (deltaTime > threshold) {
+			if (movingVertex) {
+				if (movingVertexId >= 0) {
+					Eigen::Vector2f mousePosition = getMousePosition();
+					Eigen::Vector3f mouseWorldPos;
+					int vertexId = movingVertexId;
 
-				if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
-					viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
-					vertexId, mouseWorldPos)) {
+					if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
+						viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
+						vertexId, mouseWorldPos)) {
 
-					// Mark: Used from old years solutioon
-					Eigen::Vector3f vertexPosition = {
-						(float)currentMesh.getVertices().row(movingVertexId).x(), (float)currentMesh.getVertices().row(movingVertexId).y(), (float)currentMesh.getVertices().row(movingVertexId).z()
-					};
-					std::cout << movingVertexId << std::endl;
-					Eigen::Vector3f projection = igl::project(vertexPosition, viewer.core().view, viewer.core().proj, viewer.core().viewport);
-					Eigen::Vector3f worldPosition = igl::unproject(Eigen::Vector3f(mousePosition.x(), mousePosition.y(), projection.z()),
-						viewer.core().view, viewer.core().proj, viewer.core().viewport);
-					//----------
+						// Mark: Used from old years solutioon
+						Eigen::Vector3f vertexPosition = {
+							(float)currentMesh.getVertices().row(movingVertexId).x(), (float)currentMesh.getVertices().row(movingVertexId).y(), (float)currentMesh.getVertices().row(movingVertexId).z()
+						};
+						std::cout << movingVertexId << std::endl;
+						Eigen::Vector3f projection = igl::project(vertexPosition, viewer.core().view, viewer.core().proj, viewer.core().viewport);
+						Eigen::Vector3f worldPosition = igl::unproject(Eigen::Vector3f(mousePosition.x(), mousePosition.y(), projection.z()),
+							viewer.core().view, viewer.core().proj, viewer.core().viewport);
+						//----------
 
-					currentMesh.setVertexPos(movingVertexId, worldPosition.cast<double>());
-					Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId);
-					currentMesh.setVertices(matrix);
-					updateMesh(currentMesh);
+						currentMesh.setVertexPos(movingVertexId, worldPosition.cast<double>());
+						Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId);
+						currentMesh.setVertices(matrix);
+						updateMesh(currentMesh);
+						return true;
+					}
+				}
+			}
+			else if (selectionFixedFaces) {
+				if (mouseClicked) {
+					Eigen::Vector2f mousePosition = getMousePosition();
+					int faceId;
+					Eigen::Vector3f barycentricPosition;
+					std::cout << "size of selectedFaces in moving: " << selectedFaces.size() << std::endl;
+					std::cout << "size of m_arap.selectedFaces in moving: " << m_arap.m_fixedVertices.size() << std::endl;
+
+					if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
+						viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
+						faceId, barycentricPosition)) {
+						bool selected = !selectedFaces[faceId];
+						selectedFaces[faceId] = selected;
+						const Eigen::Vector3d selectedColor(255, 0, 0);
+						Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
+						Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
+						faceColorBlock = selectedColor.transpose();
+						viewer.data().set_colors(currentMesh.getColors());
+					}
 					return true;
 				}
 			}
-		}
-		else if (selectionFixedFaces) {
-			if (mouseClicked) {
-				Eigen::Vector2f mousePosition = getMousePosition();
-				int faceId;
-				Eigen::Vector3f barycentricPosition;
-				std::cout << "size of selectedFaces in moving: " << selectedFaces.size() << std::endl;
-				std::cout << "size of m_arap.selectedFaces in moving: " << m_arap.m_fixedVertices.size() << std::endl;
-
-				if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
-					viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
-					faceId, barycentricPosition)) {
-					bool selected = !selectedFaces[faceId];
-					selectedFaces[faceId] = selected;
-					const Eigen::Vector3d selectedColor(255, 0, 0);
-					Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
-					Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
-					faceColorBlock = selectedColor.transpose();
-					viewer.data().set_colors(currentMesh.getColors());
-				}
-				return true;
-			}
+			prevTime = std::chrono::high_resolution_clock::now();
 		}
 
 		return false;
