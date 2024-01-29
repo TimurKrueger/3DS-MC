@@ -17,6 +17,7 @@
 #include <igl/opengl/glfw/imgui/ImGuiPlugin.h>
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 #include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
+#include <../../../lib/ImGuiFileDialog/ImGuiFileDialog.h>
 
 class Visualizer {
 private:
@@ -26,7 +27,6 @@ private:
     Arap m_arap;
     std::map<int, bool> selectedFaces;
     bool selectionFixedFaces;
-    bool fixedMovement;
     bool movingVertex;
     int movingVertexId;
     bool mouseClicked;
