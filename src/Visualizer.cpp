@@ -5,19 +5,15 @@
 */
 
 #include "../include/Visualizer.h"
-#include <igl/opengl/glfw/imgui/ImGuiPlugin.h>
-#include <igl/opengl/glfw/imgui/ImGuiMenu.h>
-#include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
-#include <../../../lib/ImGuiFileDialog/ImGuiFileDialog.h>
 
 Visualizer::Visualizer(const std::string& meshPath)
 	:
 	currentMesh(meshPath),
 	m_arap(currentMesh),
 	selectionFixedFaces(false),
-	fixedMovement(false),
 	movingVertex(false),
-	movingVertexId(-1)
+	movingVertexId(-1),
+	mouseClicked(false)
 {
 	viewer.data().set_mesh(currentMesh.getVertices(), currentMesh.getFaces());
 	viewer.data().set_colors(currentMesh.getColors());
@@ -28,10 +24,10 @@ Mesh Visualizer::getCurrentMesh() {
 }
 
 void Visualizer::setMesh(const Mesh& mesh) {
-
 	viewer.data().clear();
 	currentMesh = mesh;
 	viewer.data().set_mesh(currentMesh.getVertices(), currentMesh.getFaces());
+	viewer.data().set_colors(currentMesh.getColors());
 	viewer.core().align_camera_center(currentMesh.getVertices(), currentMesh.getFaces());
 }
 
@@ -52,6 +48,7 @@ void Visualizer::launch() {
 	handleMouseMove();
 	handleImGUI();
 }
+
 void Visualizer::handleImGUI() {
 	igl::opengl::glfw::imgui::ImGuiPlugin plugin;
 	viewer.plugins.push_back(&plugin);
@@ -88,6 +85,7 @@ void Visualizer::handleImGUI() {
 					std::cout << filePathName << std::endl;
 					Mesh newMesh(filePathName);
 					setMesh(newMesh);
+					m_arap = Arap(newMesh);
 				}			
 
 				ImGuiFileDialog::Instance()->Close();
@@ -119,36 +117,64 @@ Eigen::Vector2f Visualizer::getMousePosition()
 	return Eigen::Vector2f(viewer_mouse_x, viewer_mouse_y);
 }
 
+double Visualizer::getCurrentTimeInSeconds() {
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(currentTime - prevTime);
+	return duration.count();
+}
+
 void Visualizer::handleMouseMove() {
 	viewer.callback_mouse_move = [this](igl::opengl::glfw::Viewer& viewer, int button, int modifier) -> bool {
-		if (movingVertex) {
-			if (movingVertexId >= 0) {
-				Eigen::Vector2f mousePosition = getMousePosition();
-				Eigen::Vector3f mouseWorldPos;
-				int vertexId = movingVertexId;
+		double deltaTime = getCurrentTimeInSeconds();
+		if (deltaTime > threshold) {
+			if (movingVertex) {
+				if (movingVertexId >= 0) {
+					Eigen::Vector2f mousePosition = getMousePosition();
+					Eigen::Vector3f mouseWorldPos;
+					int vertexId = movingVertexId;
 
-				if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
-					viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
-					vertexId, mouseWorldPos)) {
+					if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
+						viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
+						vertexId, mouseWorldPos)) {
 
-					// Mark: Used from old years solutioon
-					Eigen::Vector3f vertexPosition = {
-						(float)currentMesh.getVertices().row(movingVertexId).x(), (float)currentMesh.getVertices().row(movingVertexId).y(), (float)currentMesh.getVertices().row(movingVertexId).z()
-					};
-					std::cout << movingVertexId << std::endl;
-					Eigen::Vector3f projection = igl::project(vertexPosition, viewer.core().view, viewer.core().proj, viewer.core().viewport);
-					Eigen::Vector3f worldPosition = igl::unproject(Eigen::Vector3f(mousePosition.x(), mousePosition.y(), projection.z()),
-						viewer.core().view, viewer.core().proj, viewer.core().viewport);
-					//----------
+						Eigen::Vector3f vertexPosition = {
+							(float)currentMesh.getVertices().row(movingVertexId).x(), (float)currentMesh.getVertices().row(movingVertexId).y(), (float)currentMesh.getVertices().row(movingVertexId).z()
+						};
 
-					currentMesh.setVertexPos(movingVertexId, worldPosition.cast<double>());
-					Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId);
-					currentMesh.setVertices(matrix);
-					updateMesh(currentMesh);
+						Eigen::Vector3f projection = igl::project(vertexPosition, viewer.core().view, viewer.core().proj, viewer.core().viewport);
+						Eigen::Vector3f worldPosition = igl::unproject(Eigen::Vector3f(mousePosition.x(), mousePosition.y(), projection.z()),
+							viewer.core().view, viewer.core().proj, viewer.core().viewport);
+
+						Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId, worldPosition.cast<double>());
+						currentMesh.setVertices(matrix);
+						updateMesh(currentMesh);
+						return true;
+					}
+				}
+			}
+			else if (selectionFixedFaces) {
+				if (mouseClicked) {
+					Eigen::Vector2f mousePosition = getMousePosition();
+					int faceId;
+					Eigen::Vector3f barycentricPosition;
+
+					if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
+						viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
+						faceId, barycentricPosition)) {
+						bool selected = !selectedFaces[faceId];
+						selectedFaces[faceId] = selected;
+						const Eigen::Vector3d selectedColor(255, 0, 0);
+						Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
+						Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(faceId);
+						faceColorBlock = selectedColor.transpose();
+						viewer.data().set_colors(currentMesh.getColors());
+					}
 					return true;
 				}
 			}
+			prevTime = std::chrono::high_resolution_clock::now();
 		}
+
 		return false;
 	};
 }
@@ -156,7 +182,7 @@ void Visualizer::handleMouseMove() {
 void Visualizer::handleMouseDown() {
 	viewer.callback_mouse_down = [this](igl::opengl::glfw::Viewer& viewer, int button, int modifier) -> bool {
 		Eigen::Vector2f mousePosition = getMousePosition();
-
+		mouseClicked = true;
 		if (selectionFixedFaces) {
 			int faceId;
 			Eigen::Vector3f barycentricPosition;
@@ -180,23 +206,6 @@ void Visualizer::handleMouseDown() {
 					faceColorBlock = currentMesh.getInitColors().row(faceId).transpose();
 				}
 				viewer.data().set_colors(currentMesh.getColors());
-			}
-		}
-		else if (fixedMovement) {
-			int faceId;
-			Eigen::Vector3f barycentricPosition;
-			if (igl::unproject_onto_mesh(mousePosition, viewer.core().view, viewer.core().proj,
-				viewer.core().viewport, currentMesh.getVertices(), currentMesh.getFaces(),
-				faceId, barycentricPosition)) {
-				Eigen::Vector3d force(0, -20, 0);
-
-				int vertexId = currentMesh.getClosestVertexId(currentMesh.getFaces(), faceId, barycentricPosition);
-				currentMesh.applyForce(vertexId, force);
-
-				Eigen::MatrixXd matrix = m_arap.computeDeformation(movingVertexId);
-				currentMesh.setVertices(matrix);
-				updateMesh(currentMesh);
-				return true;
 			}
 		}
 		else if (movingVertex) {
@@ -225,20 +234,40 @@ void Visualizer::handleKeyDown() {
 			updateMesh(currentMesh);
 			return true;
 		case '1':
-			selectionFixedFaces = true;
-			return true;
-		case '2':
-			fixedMovement = true;
+			selectionFixedFaces = !selectionFixedFaces;
+			movingVertex = false;
 			return true;
 		case '3':
-			movingVertex = true;
+			m_arap.setFixedVertices(selectedFaces);
+			movingVertex = !movingVertex;
+			selectionFixedFaces = false;
+			if (!movingVertex) {
+				const Eigen::Vector3d selectedColor(255, 0, 0);
+				for (auto f : selectedFaces) {
+					auto f_id = f.first;
+					Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
+					Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(f_id);
+					faceColorBlock = selectedColor.transpose();
+				}
+			}
+			else {
+				const Eigen::Vector3d selectedColor(0, 255, 0);
+				for (auto f : selectedFaces) {
+					auto f_id = f.first;
+					Eigen::MatrixXd& mutableColors = const_cast<Eigen::MatrixXd&>(currentMesh.getColors());
+					Eigen::Block<Eigen::MatrixXd, 1, -1, false> faceColorBlock = mutableColors.row(f_id);
+					faceColorBlock = selectedColor.transpose();
+				}
+			}
+			viewer.data().set_colors(currentMesh.getColors());
 			return true;
 		case 'R':
-			// Mark: Might need fix
 			selectedFaces.clear();
 			m_arap.setFixedVertices(selectedFaces);
 			selectionFixedFaces = false;
-			viewer.data().set_colors(currentMesh.getInitColors());
+			movingVertex = false;
+			currentMesh.setInitColors();
+			viewer.data().set_colors(currentMesh.getColors());
 			return true;
 		}
 		return false;
@@ -246,21 +275,9 @@ void Visualizer::handleKeyDown() {
 }
 
 void Visualizer::handleKeyRelease() {
-	viewer.callback_key_up = [this](igl::opengl::glfw::Viewer&, unsigned char key, int modifier) {
-
-		switch (key) {
-		case '1':
-			selectionFixedFaces = false;
-			m_arap.setFixedVertices(getFixedFaces());
-			return true;
-		case '2':
-			fixedMovement = false;
-			return true;
-		case '3':
-			movingVertex = false;
-			movingVertexId = -1;
-			return true;
-		}
+	viewer.callback_mouse_up = [this](igl::opengl::glfw::Viewer& viewer, int button, int modifier) -> bool {
+		mouseClicked = false;
+		movingVertexId = -1;
 		return false;
 	};
 }

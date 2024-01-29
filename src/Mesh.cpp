@@ -74,6 +74,10 @@ const Eigen::MatrixXd& Mesh::getInitColors() const {
     return initColors;
 }
 
+void Mesh::setInitColors() {
+    colors = initColors;
+}
+
 int Mesh::getNumVertices() const {
     return vertices.rows();
 }

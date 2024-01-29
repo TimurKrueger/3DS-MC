@@ -10,12 +10,14 @@
 #include <map>
 #include "Mesh.h"
 #include "Arap.h"
+#include <chrono>
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/unproject_onto_mesh.h>
 #include <../libigl_imgui_fonts-src/imgui_fonts_droid_sans.h>
 #include <igl/opengl/glfw/imgui/ImGuiPlugin.h>
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 #include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
+#include <../../../lib/ImGuiFileDialog/ImGuiFileDialog.h>
 
 class Visualizer {
 private:
@@ -25,9 +27,11 @@ private:
     Arap m_arap;
     std::map<int, bool> selectedFaces;
     bool selectionFixedFaces;
-    bool fixedMovement;
     bool movingVertex;
     int movingVertexId;
+    bool mouseClicked;
+    std::chrono::high_resolution_clock::time_point prevTime = std::chrono::high_resolution_clock::now();
+    double threshold = 0.016;
     
 public:
     explicit Visualizer(const std::string& meshPath);
@@ -36,6 +40,8 @@ public:
     // Get current mesh
     Mesh getCurrentMesh();
     void handleImGUI();
+
+    double getCurrentTimeInSeconds();
 
     // Get the mouse Position in screen position
     Eigen::Vector2f getMousePosition();
