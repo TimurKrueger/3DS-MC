@@ -9,7 +9,7 @@ Following Steps need to be done in order for you to run the project:
 
 Once you configured and generated with CMake you can run the project.
 Press on Load Mesh and search for a .ply/.off file. (Unfortunately you need to type in the name and press enter)
-\\n
+
 
 Once the Mesh is loaded there are several Controls:
 - "1": Enter/exit the state in which you can select the faces that will not move by clicking on the face. While the mouse button is held you can simply move over multiple faces.
