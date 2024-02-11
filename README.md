@@ -13,9 +13,9 @@ Press on Load Mesh and search for a .ply/.off file. (Unfortunately you need to t
 
 Once the Mesh is loaded there are several Controls:
 - "1": Enter/exit the state in which you can select the faces that will not move by clicking on the face. While the mouse button is held you can simply move over multiple faces.
-**Video von select Faces**
+![faces selection](./doc/vid/selectFaces.mp4)
 - "3": Enter the ARAP state in which you can drag a vertex around by clicking and dragging it with the mouse. 
-**Video von arap**
+![arap_deformation](./doc/vid/arapMove.mp4)
 
 ## Contributors
 - Köse, Ömer
