@@ -1,6 +1,6 @@
 # 3DS-MC Interactive ARAP
 As-Rigid-As-Possible surface deformation (ARAP) is a method used in computer graphics and geometric processing for deforming shapes while preserving rigidity. It aims to maintain the local rigidity of a deforming object, ensuring that nearby points move as little as possible relative to each other.
-You can find further information about this project in the report. [***report***](https://github.com/TimurKrueger/3DS-MC/tree/main/doc/report.pdf)
+You can find further information about this project in the report. [***report***](https://github.com/TimurKrueger/3DS-MC/tree/main/doc/FinalReport.pdf)
 
 ## Setup and Control
 Following Steps need to be done in order for you to run the project:
